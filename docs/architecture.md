@@ -183,6 +183,7 @@ clipping (box, polygon, sphere, plane). Фрагментный — форму т
 | `build/potree/potree.js` | не минифицирован, tree-shaking выключен | шаг 7а |
 | `src/utils/Profile.js` | линия профиля задавала цвета вершин через `THREE.VertexColors`, которого в r124 уже нет (`undefined`) — цвета не применялись | оставлено как было (линия цвета по умолчанию), комментарий в коде |
 | `src/loader/ept/BinaryLoader.js` (и `ZstandardLoader`) | `node.url()`, `node.ept`, `node.key.b` — API узлов EPT до COPC (f7ac011b, 2023); EPT binary/zstandard не грузились | **исправлено**: URL, схема, масштаб и смещение — из `node.owner`, `node.key`, `node.bounds` |
+| `PointCloudMaterial.visibleNodesTexture` 2048 × 1, `/ 2048.0` в `pointcloud.vs` | больше 2048 видимых узлов — `RangeError`, кадр не рисуется, загрузка продолжается (видно при бюджетах ~40 млн+ и малом min node size) | **исправлено**: текстура 2048 × N растёт в `PointCloudRenderer.growVisibilityTexture`, `visibleNodeAt()` через `texelFetch` |
 | `src/utils.js` `createBackgroundTexture` | шум фона через `Math.random()` — фон «gradient» отличается от запуска к запуску | открыто |
 
 ## Изменения в ходе миграции

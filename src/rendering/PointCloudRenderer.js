@@ -119,9 +119,11 @@ export class PointCloudRenderer {
 				} else {
 					visibilityTextureData = octree.computeVisibilityTextureData(vnNodes, camera);
 
-					const vnt = material.visibleNodesTexture;
-					const data = vnt.image.data;
-					data.set(visibilityTextureData.data);
+					let vnt = material.visibleNodesTexture;
+					if (visibilityTextureData.data.length > vnt.image.data.length) {
+						vnt = this.growVisibilityTexture(material, visibilityTextureData.data.length / 4);
+					}
+					vnt.image.data.set(visibilityTextureData.data);
 					vnt.needsUpdate = true;
 
 					this.visibilityCache.set(material, {octree, nodes: vnNodes.slice(), result: visibilityTextureData});
@@ -219,6 +221,28 @@ export class PointCloudRenderer {
 		}
 
 		this.state = null;
+	}
+
+	/**
+	 * Replaces the material's visibility texture with a larger one (2048 x rows, see visibleNodeAt in
+	 * pointcloud.vs). The original 2048 x 1 texture limited Potree to 2048 visible nodes; large point
+	 * budgets (e.g. 50M points with small nodes) exceed that and the frame threw a RangeError.
+	 * A texture's size cannot change after first use in three.js, so a new one is created.
+	 */
+	growVisibilityTexture(material, nodeCount) {
+		const width = 2048;
+		const rows = Math.ceil(nodeCount / width) * 2; // headroom: avoid re-creating it every few nodes
+		const texture = new THREE.DataTexture(new Uint8Array(width * rows * 4), width, rows, THREE.RGBAFormat);
+		texture.magFilter = THREE.NearestFilter;
+		texture.minFilter = THREE.NearestFilter;
+
+		material.visibleNodesTexture.dispose();
+		material.visibleNodesTexture = texture;
+		if (material.uniforms.visibleNodes) {
+			material.uniforms.visibleNodes.value = texture;
+		}
+
+		return texture;
 	}
 
 	/** Internal GPU material for a PointCloudMaterial (created once, reused). */

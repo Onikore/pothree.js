@@ -2,7 +2,8 @@
 // Run it on the original code and on the fork to compare them (PERFORMANCE.md).
 //
 //   node tests/perf/bench.mjs [example] [iterations]      default: ca13 300
-//   env: BUDGET (points, default 3M), SCISSOR=1 (draw into 1x1 px), GL=nvidia (real GPU via Vulkan)
+//   env: BUDGET (points, default 3M), SCISSOR=1 (draw into 1x1 px), GL=nvidia (real GPU via Vulkan),
+//        UNCAPPED=1 (no vsync), LOAD_TIMEOUT (seconds, default 180)
 //
 // Opens the example (point budget BUDGET, default 3M; min node size 0 = many nodes), waits until
 // loading settles, freezes the node set and calls pRenderer.render(scenePointCloud, camera)
@@ -38,6 +39,9 @@ await new Promise(r => server.listen(0, "127.0.0.1", r));
 const glArgs = process.env.GL === "nvidia"
 	? ["--use-angle=vulkan", "--enable-gpu", "--ignore-gpu-blocklist", "--enable-features=Vulkan"]
 	: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"];
+// UNCAPPED=1: no vsync, so the frame rate shows the real headroom
+if (process.env.UNCAPPED === "1") glArgs.push("--disable-gpu-vsync", "--disable-frame-rate-limit");
+const loadTimeout = Number(process.env.LOAD_TIMEOUT ?? 180) * 1000; // s, large budgets need minutes
 const browser = await pw.chromium.launch({args: glArgs});
 const page = await browser.newPage({viewport: {width: 1280, height: 800}});
 await page.goto(`http://127.0.0.1:${server.address().port}/examples/${name}.html`);
@@ -50,8 +54,9 @@ await page.evaluate((budget) => {
 }, budget);
 
 // settle: nothing loading and visible nodes unchanged for 5 s
+const loadStart = Date.now();
 let last = "", since = Date.now();
-for (const start = Date.now(); Date.now() - start < 180_000;) {
+for (const start = Date.now(); Date.now() - start < loadTimeout;) {
 	const s = await page.evaluate(() => {
 		const v = window.viewer || window.potreeViewer;
 		return v && JSON.stringify([Potree.numNodesLoading, v.scene.pointclouds.map(pc => pc.visibleNodes.length)]);
@@ -60,6 +65,7 @@ for (const start = Date.now(); Date.now() - start < 180_000;) {
 	if (s && JSON.parse(s)[0] === 0 && Date.now() - since > 10000) break;
 	await page.waitForTimeout(500);
 }
+const loadSeconds = +((since - loadStart) / 1000).toFixed(1); // until the node set stopped changing
 
 const scissor = process.env.SCISSOR === "1";
 const result = await page.evaluate(({iterations, scissor}) => {
@@ -115,7 +121,30 @@ const result = await page.evaluate(({iterations, scissor}) => {
 	};
 }, {iterations, scissor});
 
-console.log(JSON.stringify({example: name, iterations, budget, scissor, ...result}, null, 2));
+// whole frames of the running viewer (node set frozen above): frame rate and busy time, 10 s
+const frames = await page.evaluate(() => new Promise(resolve => {
+	const v = window.viewer || window.potreeViewer;
+	const intervals = [], busy = [];
+	let prev = performance.now(), start = 0;
+	const onStart = () => { const now = performance.now(); intervals.push(now - prev); prev = now; start = now; };
+	const onEnd = () => { if (start) { busy.push(performance.now() - start); start = 0; } };
+	v.addEventListener("update_start", onStart);
+	v.addEventListener("render.pass.end", onEnd);
+	setTimeout(() => {
+		v.removeEventListener("update_start", onStart);
+		v.removeEventListener("render.pass.end", onEnd);
+		const sorted = intervals.slice(2).sort((a, b) => a - b), b = busy.slice(2).sort((a, b) => a - b);
+		const worst = sorted.slice(Math.floor(0.99 * sorted.length));
+		resolve({
+			fps: +(1000 / (sorted.reduce((s, x) => s + x, 0) / sorted.length)).toFixed(1),
+			low1pctFps: +(1000 / (worst.reduce((s, x) => s + x, 0) / worst.length)).toFixed(1),
+			frameMedianMs: +sorted[Math.floor(sorted.length / 2)].toFixed(2),
+			busyMedianMs: +b[Math.floor(b.length / 2)].toFixed(2),
+		});
+	}, 10000);
+}));
+
+console.log(JSON.stringify({example: name, iterations, budget, scissor, loadSeconds, ...result, frames}, null, 2));
 
 await browser.close();
 server.close();

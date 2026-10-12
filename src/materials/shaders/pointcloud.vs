@@ -112,6 +112,13 @@ uniform float uExtraOffset;
 uniform vec3 uShadowColor;
 
 uniform sampler2D visibleNodes;
+
+// Visibility texture: 2048 texels per row and as many rows as there are visible nodes / 2048
+// (PointCloudRenderer grows it). The original was a single 2048 x 1 row read with texture2D at
+// iOffset / 2048, which limited Potree to 2048 visible nodes; texelFetch reads the same texel.
+vec4 visibleNodeAt(int i){
+	return texelFetch(visibleNodes, ivec2(i % 2048, i / 2048), 0);
+}
 uniform sampler2D gradient;
 uniform sampler2D classificationLUT;
 
@@ -245,7 +252,7 @@ float getLOD(){
 		index3d = floor(index3d + 0.5);
 		int index = int(roundHalfUp(4.0 * index3d.x + 2.0 * index3d.y + index3d.z));
 		
-		vec4 value = texture(visibleNodes, vec2(float(iOffset) / 2048.0, 0.0));
+		vec4 value = visibleNodeAt(iOffset);
 		int mask = int(roundHalfUp(value.r * 255.0));
 
 		if(isBitSet(mask, index)){
@@ -285,7 +292,7 @@ float getSpacing(){
 		index3d = floor(index3d + 0.5);
 		int index = int(roundHalfUp(4.0 * index3d.x + 2.0 * index3d.y + index3d.z));
 		
-		vec4 value = texture(visibleNodes, vec2(float(iOffset) / 2048.0, 0.0));
+		vec4 value = visibleNodeAt(iOffset);
 		int mask = int(roundHalfUp(value.r * 255.0));
 		float spacingFactor = value.a;
 
@@ -343,7 +350,7 @@ float getLOD(){
 		
 	for(float i = 0.0; i <= 1000.0; i++){
 		
-		vec4 value = texture(visibleNodes, vec2(iOffset / 2048.0, 0.0));
+		vec4 value = visibleNodeAt(int(iOffset));
 		
 		int children = int(value.r * 255.0);
 		float next = value.g * 255.0;
