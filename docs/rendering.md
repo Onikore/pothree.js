@@ -101,7 +101,7 @@
 | внутренний материал | на каждый `PointCloudMaterial` свой `RawShaderMaterial` (`WeakMap`). В нём **только** uniforms, которые выставлял старый рендерер: остальные uniforms шейдера остаются нулями, как было |
 | `updateShader` | исходник материала + `#define` рендера; при изменении — `needsUpdate`, three берёт программу из своего кэша или компилирует |
 | `updateBlending` | непрозрачно: без смешивания, тест и запись глубины; `opacity < 1`: `SRC_ALPHA, ONE`, без глубины; `params` переопределяют |
-| `onBeforeRenderNode` | uniforms узла (`uLevel`, `uVNStart`, `uPCIndex`, `uNodeSpacing`, `uDebug`, clip-полигоны, тени, GPS time), псевдонимы атрибутов, `uniformsNeedUpdate` |
+| `onBeforeRenderNode` | uniforms узла: `uNodeData` = (`uLevel`, `uVNStart`, `uPCIndex`, `uNodeSpacing`) одним `vec4` — один вызов GL вместо четырёх (в шейдере старые имена — макросы на компоненты), `uDebug`, clip-полигоны, тени; `uniformsNeedUpdate` |
 | `updateAttributeAliases` | один раз на геометрию: `rgba`→`color`, `return number`→`returnNumber` и т.д. (тот же `BufferAttribute`); `aExtra` — на активный «дополнительный» атрибут |
 
 Контекст — WebGL2, шейдеры `src/materials/shaders/*` — GLSL ES 3.0 (`glslVersion: THREE.GLSL3`;
@@ -115,3 +115,11 @@
 расширения) и `gl.getError()` в логе потери контекста. Единственная опора на недокументированное
 поведение three — пропуск uniform с `needsUpdate === false` при заливке (`PointCloudRenderer`,
 uniforms облака заливаются с первым узлом), проверено в r152 и r186.
+
+## Производительность
+
+Замеры и методика — `PERFORMANCE.md`. Главное, что выяснилось профилированием (CDP, 10 млн точек,
+555 узлов): время уходит в вызовы WebGL (`drawArrays`, `uniform*`), а не в JS three.js. Старый
+рендерер делал ~22 000 вызовов GL на кадр (на каждый узел заново `bindBuffer`/`vertexAttribPointer`/
+`enableVertexAttribArray` для каждого атрибута), новый — ~2 400 (VAO three, uniforms облака один раз,
+поузловые — одним `vec4`). Один вызов `uniform*` в контексте WebGL2 в Chrome дороже, чем в WebGL1.

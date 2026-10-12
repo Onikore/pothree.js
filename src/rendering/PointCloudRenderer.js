@@ -122,10 +122,11 @@ export class PointCloudRenderer {
 		this.updateBlending(rm, material, params);
 		this.updateOctreeUniforms(rm, material, octree, camera, target, params, view, viewInv, proj, projInv, shadowMaps);
 
-		for (let name of ["uVNStart", "uDebug", "uLevel", "uNodeSpacing", "uPCIndex"]) {
-			if (!rm.uniforms[name]) {
-				rm.uniforms[name] = {value: 0};
-			}
+		if (!rm.uniforms.uNodeData) {
+			rm.uniforms.uNodeData = {value: new THREE.Vector4()}; // level, vnStart, pcIndex, spacing
+		}
+		if (!rm.uniforms.uDebug) {
+			rm.uniforms.uDebug = {value: false};
 		}
 		if (shadowMaps.length > 0) {
 			let size = 16 * shadowMaps.length;
@@ -481,14 +482,16 @@ export class PointCloudRenderer {
 		}
 		s.nodesDrawn++;
 
-		if (s.visibilityTextureData) {
-			u.uVNStart.value = s.visibilityTextureData.offsets.get(node);
-		}
+		// uNodeData = (uLevel, uVNStart, uPCIndex, uNodeSpacing), see pointcloud.vs.
+		// uVNStart keeps its last value when there is no visibility texture, as before.
+		let nodeData = u.uNodeData.value;
+		nodeData.set(
+			node.getLevel(),
+			s.visibilityTextureData ? s.visibilityTextureData.offsets.get(node) : nodeData.y,
+			node.sceneNode.userData.pcIndex,
+			node.geometryNode.estimatedSpacing);
 
 		u.uDebug.value = node.debug ? true : false;
-		u.uLevel.value = node.getLevel();
-		u.uNodeSpacing.value = node.geometryNode.estimatedSpacing;
-		u.uPCIndex.value = node.sceneNode.userData.pcIndex;
 
 		let world = node.sceneNode.matrixWorld;
 
@@ -680,7 +683,7 @@ const SHADER_ATTRIBUTES = new Set([
 
 /** Uniforms that change from node to node (see onBeforeRenderNode); all others are per octree. */
 const PER_NODE_UNIFORMS = new Set([
-	"uVNStart", "uDebug", "uLevel", "uNodeSpacing", "uPCIndex",
+	"uNodeData", "uDebug",
 	"uClipPolygonVCount", "uClipPolygonWVP", "uClipPolygonVertices", "uShadowWorldView",
 ]);
 

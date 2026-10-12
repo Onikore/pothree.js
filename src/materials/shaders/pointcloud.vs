@@ -65,13 +65,16 @@ uniform float size;
 uniform float minSize;
 uniform float maxSize;
 
-uniform float uPCIndex;
+// Per-node values packed into one vec4: one uniform upload per node instead of four
+// (set by PointCloudRenderer.onBeforeRenderNode).
+uniform vec4 uNodeData;
+#define uLevel uNodeData.x
+#define uVNStart uNodeData.y
+#define uPCIndex uNodeData.z
+#define uNodeSpacing uNodeData.w
 uniform float uOctreeSpacing;
-uniform float uNodeSpacing;
 uniform float uOctreeSize;
 uniform vec3 uBBSize;
-uniform float uLevel;
-uniform float uVNStart;
 uniform bool uIsLeafNode;
 
 uniform vec3 uColor;

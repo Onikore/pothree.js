@@ -2,6 +2,7 @@
 // Run it on the original code and on the fork to compare them (PERFORMANCE.md).
 //
 //   node tests/perf/bench.mjs [example] [iterations]      default: ca13 300
+//   env: BUDGET (points, default 3M), SCISSOR=1 (draw into 1x1 px), GL=nvidia (real GPU via Vulkan)
 //
 // Opens the example (point budget BUDGET, default 3M; min node size 0 = many nodes), waits until
 // loading settles, freezes the node set and calls pRenderer.render(scenePointCloud, camera)
@@ -33,7 +34,11 @@ const server = http.createServer((req, res) => {
 });
 await new Promise(r => server.listen(0, "127.0.0.1", r));
 
-const browser = await pw.chromium.launch({args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]});
+// GL=nvidia: real GPU through ANGLE/Vulkan (this machine: RTX 4050); default: SwiftShader (CPU)
+const glArgs = process.env.GL === "nvidia"
+	? ["--use-angle=vulkan", "--enable-gpu", "--ignore-gpu-blocklist", "--enable-features=Vulkan"]
+	: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"];
+const browser = await pw.chromium.launch({args: glArgs});
 const page = await browser.newPage({viewport: {width: 1280, height: 800}});
 await page.goto(`http://127.0.0.1:${server.address().port}/examples/${name}.html`);
 const budget = Number(process.env.BUDGET ?? 3_000_000);
@@ -56,12 +61,19 @@ for (const start = Date.now(); Date.now() - start < 180_000;) {
 	await page.waitForTimeout(500);
 }
 
-const result = await page.evaluate((iterations) => {
+const scissor = process.env.SCISSOR === "1";
+const result = await page.evaluate(({iterations, scissor}) => {
 	const v = window.viewer || window.potreeViewer;
 	v.setFreeze?.(true); // keep the node set fixed while measuring
 	const r = v.renderer, gl = r.getContext();
 	const camera = v.scene.getActiveCamera();
 	const pointRenderer = v.pRenderer; // the build's own point cloud renderer (original: Renderer, fork: PointCloudRenderer)
+	if (scissor) {
+		// 1x1 px scissor: (almost) no rasterization, so only the CPU cost of issuing the draws is left.
+		// Without it SwiftShader rasterizes on the CPU and its back-pressure dominates the timings.
+		r.setScissor(0, 0, 1, 1);
+		r.setScissorTest(true);
+	}
 
 	// cpu: time of the render() calls themselves (JS + three.js + GL command submission) - this is
 	// where per-node overhead shows. total: until the GPU (here SwiftShader) has finished.
@@ -96,13 +108,14 @@ const result = await page.evaluate((iterations) => {
 		canvas: [r.domElement.width, r.domElement.height],
 		nodes: pcs.reduce((s, pc) => s + pc.visibleNodes.length, 0),
 		points: pcs.reduce((s, pc) => s + pc.numVisiblePoints, 0),
+		gpu: (() => { const e = gl.getExtension("WEBGL_debug_renderer_info"); return e ? gl.getParameter(e.UNMASKED_RENDERER_WEBGL) : null; })(),
 		jsHeapMB: performance.memory ? +(performance.memory.usedJSHeapSize / 1e6).toFixed(1) : null,
 		cpu: stats(times.cpu),
 		total: stats(times.total),
 	};
-}, iterations);
+}, {iterations, scissor});
 
-console.log(JSON.stringify({example: name, iterations, budget, ...result}, null, 2));
+console.log(JSON.stringify({example: name, iterations, budget, scissor, ...result}, null, 2));
 
 await browser.close();
 server.close();
