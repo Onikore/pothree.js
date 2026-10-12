@@ -1736,9 +1736,14 @@ export class Viewer extends EventDispatcher{
 				});
 			}
 
-			this._previousCamera = this.scene.getActiveCamera().clone();
-			this._previousCamera.rotation.copy(this.scene.getActiveCamera().rotation);
-
+			// copy into the kept camera instead of cloning a new one every frame
+			let activeCamera = this.scene.getActiveCamera();
+			if(this._previousCamera.type !== activeCamera.type){
+				this._previousCamera = activeCamera.clone();
+			}else{
+				this._previousCamera.copy(activeCamera);
+			}
+			this._previousCamera.rotation.copy(activeCamera.rotation);
 		}
 
 		{ // update clip boxes
@@ -1790,9 +1795,10 @@ export class Viewer extends EventDispatcher{
 		
 		if(this.mapView){
 			this.mapView.update(delta);
-			if(this.mapView.sceneProjection){
+			if(this.mapView.sceneProjection && !this._mapToggleShown){
+				// once, not every frame (jQuery DOM access showed up in frame profiles)
 				$( "#potree_map_toggle" ).css("display", "block");
-				
+				this._mapToggleShown = true;
 			}
 		}
 

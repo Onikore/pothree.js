@@ -101,7 +101,9 @@ console.log('Potree ' + version.major + '.' + version.minor + version.suffix);
 export let pointBudget = 1 * 1000 * 1000;
 export let framenumber = 0;
 export let numNodesLoading = 0;
-export let maxNodesLoading = 4;
+// Nodes loaded in parallel. Was 4; 8 loads CA13 33% faster (tests/perf/load.mjs, PERFORMANCE.md).
+// Above 8 there is no gain over HTTP/1.1 (browsers open at most 6 connections per host).
+export let maxNodesLoading = 8;
 
 export const debug = {};
 

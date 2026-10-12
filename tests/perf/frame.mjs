@@ -1,7 +1,7 @@
 // Whole-frame profile while the camera orbits: frame times and the hottest JS functions.
 //
 //   node tests/perf/frame.mjs [example] [seconds]          default: ca13 20
-//   env: BUDGET (default 3M), GL=nvidia (real GPU via Vulkan; default SwiftShader)
+//   env: BUDGET (default 3M), GL=nvidia (real GPU via Vulkan; default SwiftShader), UNCAPPED=1 (no vsync)
 //
 // Waits until loading settles, then rotates the view by a fixed angle per frame (so LOD selection,
 // node loading and rendering all run), records rAF frame times and a CPU profile (CDP sampling),
@@ -40,6 +40,8 @@ await new Promise(r => server.listen(0, "127.0.0.1", r));
 const glArgs = process.env.GL === "nvidia"
 	? ["--use-angle=vulkan", "--enable-gpu", "--ignore-gpu-blocklist", "--enable-features=Vulkan"]
 	: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"];
+// UNCAPPED=1: no vsync / frame rate limit, so FPS shows the real headroom instead of 60
+if (process.env.UNCAPPED === "1") glArgs.push("--disable-gpu-vsync", "--disable-frame-rate-limit");
 const browser = await pw.chromium.launch({args: glArgs});
 const page = await browser.newPage({viewport: {width: 1280, height: 800}});
 await page.goto(`http://127.0.0.1:${server.address().port}/examples/${name}.html`);
