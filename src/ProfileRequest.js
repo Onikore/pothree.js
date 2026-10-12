@@ -128,7 +128,7 @@ export class ProfileRequest {
 			if (node.loaded) {
 				// add points to result
 				intersectedNodes.push(node);
-				exports.lru.touch(node);
+				Potree.lru.touch(node);
 				this.highestLevelServed = Math.max(node.getLevel(), this.highestLevelServed);
 
 				var geom = node.pcoGeometry;

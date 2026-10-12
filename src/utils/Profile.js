@@ -84,11 +84,11 @@ export class Profile extends THREE.Object3D{
 
 		// edges & boxes
 		if (this.points.length > 1) {
-			let lineGeometry = new THREE.Geometry();
-			lineGeometry.vertices.push(new THREE.Vector3(), new THREE.Vector3());
-			lineGeometry.colors.push(this.lineColor, this.lineColor, this.lineColor);
+			let lineGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+			// The original also set per-vertex colors with vertexColors: THREE.VertexColors, but that
+			// constant no longer existed in r124 (undefined -> vertex colors off), so the line was drawn
+			// in the material's default color. Kept that way to match the original rendering.
 			let lineMaterial = new THREE.LineBasicMaterial({
-				vertexColors: THREE.VertexColors,
 				linewidth: 2,
 				transparent: true,
 				opacity: 0.4
@@ -253,14 +253,16 @@ export class Profile extends THREE.Object3D{
 			}
 
 			if (leftEdge) {
-				leftEdge.geometry.vertices[1].copy(point);
-				leftEdge.geometry.verticesNeedUpdate = true;
+				let position = leftEdge.geometry.attributes.position;
+				position.setXYZ(1, point.x, point.y, point.z);
+				position.needsUpdate = true;
 				leftEdge.geometry.computeBoundingSphere();
 			}
 
 			if (rightEdge) {
-				rightEdge.geometry.vertices[0].copy(point);
-				rightEdge.geometry.verticesNeedUpdate = true;
+				let position = rightEdge.geometry.attributes.position;
+				position.setXYZ(0, point.x, point.y, point.z);
+				position.needsUpdate = true;
 				rightEdge.geometry.computeBoundingSphere();
 			}
 

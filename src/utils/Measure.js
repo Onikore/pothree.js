@@ -659,7 +659,6 @@ export class Measure extends THREE.Object3D {
 					...nextPoint.position.clone().sub(point.position).toArray(),
 				]);
 
-				edge.geometry.verticesNeedUpdate = true;
 				edge.geometry.computeBoundingSphere();
 				edge.computeLineDistances();
 				edge.visible = index < lastIndex || this.closed;
@@ -736,7 +735,6 @@ export class Measure extends THREE.Object3D {
 					...end.clone().sub(lowPoint).toArray(),
 				]);
 
-				heightEdge.geometry.verticesNeedUpdate = true;
 				// heightEdge.geometry.computeLineDistances();
 				// heightEdge.geometry.lineDistancesNeedUpdate = true;
 				heightEdge.geometry.computeBoundingSphere();
@@ -798,7 +796,6 @@ export class Measure extends THREE.Object3D {
 					...B.clone().sub(center).toArray()
 				] );
 
-				circleRadiusLine.geometry.verticesNeedUpdate = true;
 				circleRadiusLine.geometry.computeBoundingSphere();
 				circleRadiusLine.position.copy(center);
 				circleRadiusLine.computeLineDistances();

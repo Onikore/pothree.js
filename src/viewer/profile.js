@@ -251,31 +251,31 @@ export class ProfileWindow extends EventDispatcher {
 		this.autoFitEnabled = true; // completely disable/enable
 		this.autoFit = false; // internal
 
-		let cwIcon = `${exports.resourcePath}/icons/arrow_cw.svg`;
+		let cwIcon = `${Potree.resourcePath}/icons/arrow_cw.svg`;
 		$('#potree_profile_rotate_cw').attr('src', cwIcon);
 
-		let ccwIcon = `${exports.resourcePath}/icons/arrow_ccw.svg`;
+		let ccwIcon = `${Potree.resourcePath}/icons/arrow_ccw.svg`;
 		$('#potree_profile_rotate_ccw').attr('src', ccwIcon);
 		
-		let forwardIcon = `${exports.resourcePath}/icons/arrow_up.svg`;
+		let forwardIcon = `${Potree.resourcePath}/icons/arrow_up.svg`;
 		$('#potree_profile_move_forward').attr('src', forwardIcon);
 
-		let backwardIcon = `${exports.resourcePath}/icons/arrow_down.svg`;
+		let backwardIcon = `${Potree.resourcePath}/icons/arrow_down.svg`;
 		$('#potree_profile_move_backward').attr('src', backwardIcon);
 
-		let dxf2DIcon = `${exports.resourcePath}/icons/file_dxf_2d.svg`;
+		let dxf2DIcon = `${Potree.resourcePath}/icons/file_dxf_2d.svg`;
 		$('#potree_download_dxf2D_icon').attr('src', dxf2DIcon);
 
-		let dxf3DIcon = `${exports.resourcePath}/icons/file_dxf_3d.svg`;
+		let dxf3DIcon = `${Potree.resourcePath}/icons/file_dxf_3d.svg`;
 		$('#potree_download_dxf3D_icon').attr('src', dxf3DIcon);
 
-		let csvIcon = `${exports.resourcePath}/icons/file_csv_2d.svg`;
+		let csvIcon = `${Potree.resourcePath}/icons/file_csv_2d.svg`;
 		$('#potree_download_csv_icon').attr('src', csvIcon);
 
-		let lasIcon = `${exports.resourcePath}/icons/file_las_3d.svg`;
+		let lasIcon = `${Potree.resourcePath}/icons/file_las_3d.svg`;
 		$('#potree_download_las_icon').attr('src', lasIcon);
 
-		let closeIcon = `${exports.resourcePath}/icons/close.svg`;
+		let closeIcon = `${Potree.resourcePath}/icons/close.svg`;
 		$('#closeProfileContainer').attr("src", closeIcon);
 
 		this.initTHREE();
@@ -992,12 +992,12 @@ export class ProfileWindowController {
 		}
 
 		$("#potree_profile_rotate_cw").click( () => {
-			const radians = THREE.Math.degToRad(this.rotateAmount);
+			const radians = THREE.MathUtils.degToRad(this.rotateAmount);
 			rotate(-radians);
 		});
 
 		$("#potree_profile_rotate_ccw").click( () => {
-			const radians = THREE.Math.degToRad(this.rotateAmount);
+			const radians = THREE.MathUtils.degToRad(this.rotateAmount);
 			rotate(radians);
 		});
 

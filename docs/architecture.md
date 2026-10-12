@@ -169,22 +169,25 @@ clipping (box, polygon, sphere, plane). Фрагментный — форму т
 
 ## Проблемы, найденные при разборе
 
-Не исправлены, исправляются в соответствующих шагах миграции.
+Статус — в последней колонке.
 
-| Где | Что |
-|---|---|
-| `src/Potree.js`, ветка `metadata.json` | облако Potree 2.0 грузится **дважды**: `Potree.OctreeLoader.load(path).then(...)` и сразу `OctreeLoader.load(path, callback)` |
-| `src/Potree.js`, ветка `.vpc` | `PointCloudArena4DGeometry`/`PointCloudArena4D` не импортированы — `ReferenceError` при загрузке `.vpc` |
-| `src/Potree.js` | при импорте регистрирует jQuery-плагин `$.fn.selectgroup` — ядро не работает без глобального jQuery |
-| `src/Potree_update_visibility.js` | `exports.lru`, `Potree.pointBudget` — работает только в UMD |
-| `src/Potree_update_visibility.js` | `camera.clone()` каждый кадр на каждое облако, результат не используется |
-| `src/Potree_update_visibility.js` | отсев по clip box создаёт ~20 объектов three на каждый узел × каждый box каждый кадр |
-| `src/Potree_update_visibility.js` | `p.dem instanceof Potree.DEM` — класса `DEM` в коде нет; упадёт, если включить `generateDEM` |
-| `src/workers/DEMWorker.js`, `shaders/pointcloud_dynamic.*` | нигде не используются |
-| `build/potree/potree.js` | не минифицирован, tree-shaking выключен |
+| Где | Что | Статус |
+|---|---|---|
+| `src/Potree.js`, ветка `metadata.json` | облако Potree 2.0 грузится **дважды**: `Potree.OctreeLoader.load(path).then(...)` и сразу `OctreeLoader.load(path, callback)` | **исправлено в шаге 2** |
+| `src/Potree.js`, ветка `.vpc` | `PointCloudArena4DGeometry`/`PointCloudArena4D` не импортированы — `ReferenceError` при загрузке `.vpc` | **исправлено в шаге 2** (импорты и ES-экспорты); сервер тестовых данных Arena4D отвечает 503, работу проверить нельзя |
+| `src/Potree.js` | при импорте регистрирует jQuery-плагин `$.fn.selectgroup` — ядро не работает без глобального jQuery | шаг 7а |
+| ядро (`Potree_update_visibility.js`, `ProfileRequest.js`, `PotreeRenderer.js` и др.) | `exports.lru`, `exports.resourcePath`, `Potree.pointBudget` — работает только в UMD | шаг 2: `exports.*` → `Potree.*` (в UMD это один объект, поведение то же, но сборка больше не зависит от имени параметра обёртки). Глобальное состояние целиком — шаг 7а |
+| `src/Potree_update_visibility.js` | `camera.clone()` каждый кадр на каждое облако, результат не используется | **исправлено в шаге 2** |
+| `src/Potree_update_visibility.js` | отсев по clip box создаёт ~20 объектов three на каждый узел × каждый box каждый кадр | **исправлено в шаге 2**: фрустум clip box считается раз за кадр на пару (облако, box) — `computeClipBoxFrustum` |
+| `src/Potree_update_visibility.js` | `p.dem instanceof Potree.DEM` — класса `DEM` в коде нет; упадёт, если включить `generateDEM` | открыто |
+| `src/workers/DEMWorker.js`, `shaders/pointcloud_dynamic.*` | нигде не используются | открыто (удаление — по согласованию) |
+| `build/potree/potree.js` | не минифицирован, tree-shaking выключен | шаг 7а |
+| `src/utils/Profile.js` | линия профиля задавала цвета вершин через `THREE.VertexColors`, которого в r124 уже нет (`undefined`) — цвета не применялись | оставлено как было (линия цвета по умолчанию), комментарий в коде |
+| `src/utils.js` `createBackgroundTexture` | шум фона через `Math.random()` — фон «gradient» отличается от запуска к запуску | открыто |
 
 ## Изменения в ходе миграции
 
 | Шаг | Что изменилось |
 |---|---|
 | 1 | three.js берётся из npm (`three@0.124.0`, тот же r124), `libs/three.js` удалена; импорты в `src/` и примерах — `"three"`, `"three/examples/jsm/..."`; примеры получили import map. Собственный `VRButton` Potree перенесён в `src/viewer/VRButton.js`. Сборка — rollup 4 (`rollup.config.mjs`), ошибка rollup валит `npm run build`. Подробно — `docs/build.md`. |
+| 2 | `THREE.Math` → `THREE.MathUtils`; `RGBFormat` → `RGBAFormat` (фон-градиент); все `THREE.Geometry` (линии и рамки измерений, профиля, объёмов, clip volume, гизмо, сетки, отладочные линии, путь анимации, рамки ориентированных снимков) → `BufferGeometry.setFromPoints`, обновление вершин — через `attributes.position.setXYZ`; исправлены ошибки и аллокации из таблицы «Проблемы». |

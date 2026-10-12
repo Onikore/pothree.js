@@ -75,12 +75,10 @@ export class Utils {
 	static debugLine(parent, start, end, color){
 
 		let material = new THREE.LineBasicMaterial({ color: color }); 
-		let geometry = new THREE.Geometry();
-
 		const p1 = new THREE.Vector3(0, 0, 0);
 		const p2 = end.clone().sub(start);
 
-		geometry.vertices.push(p1, p2);
+		let geometry = new THREE.BufferGeometry().setFromPoints([p1, p2]);
 
 		let tl = new THREE.Line( geometry, material );
 		tl.position.copy(start);
@@ -90,9 +88,10 @@ export class Utils {
 		let line = {
 			node: tl,
 			set: (start, end) => {
-				geometry.vertices[0].copy(start);
-				geometry.vertices[1].copy(end);
-				geometry.verticesNeedUpdate = true;
+				let position = geometry.attributes.position;
+				position.setXYZ(0, start.x, start.y, start.z);
+				position.setXYZ(1, end.x, end.y, end.z);
+				position.needsUpdate = true;
 			},
 		};
 
@@ -102,7 +101,7 @@ export class Utils {
 	static debugCircle(parent, center, radius, normal, color){
 		let material = new THREE.LineBasicMaterial({ color: color });
 
-		let geometry = new THREE.Geometry();
+		let points = [];
 
 		let n = 32;
 		for(let i = 0; i <= n; i++){
@@ -121,9 +120,10 @@ export class Utils {
 				0
 			);
 
-			geometry.vertices.push(p0, p1); 
+			points.push(p0, p1); 
 		}
 
+		let geometry = new THREE.BufferGeometry().setFromPoints(points);
 		let tl = new THREE.Line( geometry, material ); 
 		tl.position.copy(center);
 		tl.scale.set(radius, radius, radius);
@@ -342,18 +342,19 @@ export class Utils {
 			color: color || 0x888888
 		});
 
-		let geometry = new THREE.Geometry();
+		let points = [];
 		for (let i = 0; i <= length; i++) {
-			geometry.vertices.push(new THREE.Vector3(-(spacing * width) / 2, i * spacing - (spacing * length) / 2, 0));
-			geometry.vertices.push(new THREE.Vector3(+(spacing * width) / 2, i * spacing - (spacing * length) / 2, 0));
+			points.push(new THREE.Vector3(-(spacing * width) / 2, i * spacing - (spacing * length) / 2, 0));
+			points.push(new THREE.Vector3(+(spacing * width) / 2, i * spacing - (spacing * length) / 2, 0));
 		}
 
 		for (let i = 0; i <= width; i++) {
-			geometry.vertices.push(new THREE.Vector3(i * spacing - (spacing * width) / 2, -(spacing * length) / 2, 0));
-			geometry.vertices.push(new THREE.Vector3(i * spacing - (spacing * width) / 2, +(spacing * length) / 2, 0));
+			points.push(new THREE.Vector3(i * spacing - (spacing * width) / 2, -(spacing * length) / 2, 0));
+			points.push(new THREE.Vector3(i * spacing - (spacing * width) / 2, +(spacing * length) / 2, 0));
 		}
 
-		let line = new THREE.LineSegments(geometry, material, THREE.LinePieces);
+		let geometry = new THREE.BufferGeometry().setFromPoints(points);
+		let line = new THREE.LineSegments(geometry, material);
 		line.receiveShadow = true;
 		return line;
 	}
@@ -365,7 +366,7 @@ export class Utils {
 
 		// map.magFilter = THREE.NearestFilter;
 		let size = width * height;
-		let data = new Uint8Array(3 * size);
+		let data = new Uint8Array(4 * size); // RGBA: RGBFormat was removed from three.js in r137
 
 		let chroma = [1, 1.5, 1.7];
 		let max = gauss(0, 0);
@@ -383,13 +384,14 @@ export class Utils {
 
 				// d = Math.pow(d, 0.6);
 
-				data[3 * i + 0] = 255 * (d / 15 + 0.05 + r) * chroma[0];
-				data[3 * i + 1] = 255 * (d / 15 + 0.05 + r) * chroma[1];
-				data[3 * i + 2] = 255 * (d / 15 + 0.05 + r) * chroma[2];
+				data[4 * i + 0] = 255 * (d / 15 + 0.05 + r) * chroma[0];
+				data[4 * i + 1] = 255 * (d / 15 + 0.05 + r) * chroma[1];
+				data[4 * i + 2] = 255 * (d / 15 + 0.05 + r) * chroma[2];
+				data[4 * i + 3] = 255;
 			}
 		}
 
-		let texture = new THREE.DataTexture(data, width, height, THREE.RGBFormat);
+		let texture = new THREE.DataTexture(data, width, height, THREE.RGBAFormat);
 		texture.needsUpdate = true;
 
 		return texture;

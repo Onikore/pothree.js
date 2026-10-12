@@ -135,9 +135,9 @@ export class Images360 extends EventDispatcher{
 		{ // orientation
 			let {course, pitch, roll} = image360;
 			this.sphere.rotation.set(
-				THREE.Math.degToRad(+roll + 90),
-				THREE.Math.degToRad(-pitch),
-				THREE.Math.degToRad(-course + 90),
+				THREE.MathUtils.degToRad(+roll + 90),
+				THREE.MathUtils.degToRad(-pitch),
+				THREE.MathUtils.degToRad(-course + 90),
 				"ZYX"
 			);
 		}
@@ -324,9 +324,9 @@ export class Images360Loader{
 			{ // orientation
 				var {course, pitch, roll} = image360;
 				mesh.rotation.set(
-					THREE.Math.degToRad(+roll + 90),
-					THREE.Math.degToRad(-pitch),
-					THREE.Math.degToRad(-course + 90),
+					THREE.MathUtils.degToRad(+roll + 90),
+					THREE.MathUtils.degToRad(-pitch),
+					THREE.MathUtils.degToRad(-course + 90),
 					"ZYX"
 				);
 			}

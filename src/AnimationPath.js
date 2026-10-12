@@ -110,24 +110,25 @@ export class AnimationPath{
 		}
 	}
 
+	/**
+	 * Polyline through the path, sampled at 500 steps (plus the start point again if closed).
+	 * @returns {THREE.BufferGeometry} positions only; use with THREE.Line. Returned THREE.Geometry before r125.
+	 */
 	getGeometry () {
-		let geometry = new THREE.Geometry();
+		let points = [];
 
 		let samples = 500;
-		let i = 0;
 		for (let u = 0; u <= 1; u += 1 / samples) {
 			let position = this.spline.getPoint(u);
-			geometry.vertices[i] = new THREE.Vector3(position.x, position.y, position.z);
-
-			i++;
+			points.push(new THREE.Vector3(position.x, position.y, position.z));
 		}
 
 		if(this.closed){
 			let position = this.spline.getPoint(0);
-			geometry.vertices[i] = new THREE.Vector3(position.x, position.y, position.z);
+			points.push(new THREE.Vector3(position.x, position.y, position.z));
 		}
 
-		return geometry;
+		return new THREE.BufferGeometry().setFromPoints(points);
 	}
 
 	get closed(){

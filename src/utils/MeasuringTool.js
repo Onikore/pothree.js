@@ -67,7 +67,6 @@ function updateAzimuth(viewer, measure){
 		...p1.position.clone().sub(p0.position).toArray(),
 	]);
 	azimuth.centerToTarget.position.copy(p0.position);
-	azimuth.centerToTarget.geometry.verticesNeedUpdate = true;
 	azimuth.centerToTarget.geometry.computeBoundingSphere();
 	azimuth.centerToTarget.computeLineDistances();
 	azimuth.centerToTarget.material.resolution.set(width, height);
@@ -80,7 +79,6 @@ function updateAzimuth(viewer, measure){
 		0,
 	]);
 	azimuth.centerToTargetground.position.copy(p0.position);
-	azimuth.centerToTargetground.geometry.verticesNeedUpdate = true;
 	azimuth.centerToTargetground.geometry.computeBoundingSphere();
 	azimuth.centerToTargetground.computeLineDistances();
 	azimuth.centerToTargetground.material.resolution.set(width, height);
@@ -93,14 +91,13 @@ function updateAzimuth(viewer, measure){
 		0,
 	]);
 	azimuth.centerToNorth.position.copy(p0.position);
-	azimuth.centerToNorth.geometry.verticesNeedUpdate = true;
 	azimuth.centerToNorth.geometry.computeBoundingSphere();
 	azimuth.centerToNorth.computeLineDistances();
 	azimuth.centerToNorth.material.resolution.set(width, height);
 
 	// label
 	const radians = Utils.computeAzimuth(p0.position, p1.position, viewer.getProjection());
-	let degrees = THREE.Math.radToDeg(radians);
+	let degrees = THREE.MathUtils.radToDeg(radians);
 	if(degrees < 0){
 		degrees = 360 + degrees;
 	}

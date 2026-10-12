@@ -35,7 +35,8 @@ const only = arg("--only")?.split(",") ?? (arg("--group") ? config.groups[arg("-
 
 const VIEWPORT = {width: 1280, height: 800};
 const SETTLE_MS = 2000;     // loading must stay idle this long
-const TIMEOUT_MS = 90_000;  // per example
+const SETTLE_FRAMES = 30;   // ...and for this many rendered frames
+const TIMEOUT_MS = 180_000; // per example
 
 // ponytail: minimal static server, enough for examples (no ranges, no caching)
 const MIME = {".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css",
@@ -62,7 +63,9 @@ const FIND_VIEWER = `(() => {
 	return null;
 })()`;
 
-// Runs in the page: loading state. "settled" = no nodes loading and visible point count unchanged.
+// Runs in the page: loading state. `nodes` (visible scene nodes) keeps growing after loading
+// finished, because Potree moves at most 2 loaded nodes per frame to the scene; `frame` lets us
+// require a number of rendered frames, not only wall time (frames are slow under SwiftShader).
 const STATE = `(() => {
 	const f = ${FIND_VIEWER};
 	if (!f) return null;
@@ -71,18 +74,22 @@ const STATE = `(() => {
 		loading: f.w.Potree.numNodesLoading,
 		pointclouds: pcs.length,
 		points: pcs.reduce((s, pc) => s + (pc.numVisiblePoints || 0), 0),
+		nodes: pcs.reduce((s, pc) => s + (pc.visibleNodes ? pc.visibleNodes.length : 0), 0),
+		frame: f.w.Potree.framenumber,
 	};
 })()`;
 
+// Settled = nothing loading and loading state unchanged for SETTLE_MS and SETTLE_FRAMES frames.
 async function waitSettled(page, expectPointclouds) {
 	const start = Date.now();
-	let last = null, stableSince = Date.now();
+	let last = null, stableSince = Date.now(), stableFrame = 0;
 	while (Date.now() - start < TIMEOUT_MS) {
 		const s = await page.evaluate(STATE).catch(() => null);
-		const key = s && JSON.stringify(s);
-		if (key !== last) { last = key; stableSince = Date.now(); }
+		const key = s && JSON.stringify({...s, frame: undefined});
+		if (key !== last) { last = key; stableSince = Date.now(); stableFrame = s?.frame ?? 0; }
 		const ready = s ? (s.loading === 0 && (!expectPointclouds || s.pointclouds > 0)) : !expectPointclouds;
-		if (ready && Date.now() - stableSince >= SETTLE_MS) return s;
+		const frames = s ? s.frame - stableFrame : SETTLE_FRAMES;
+		if (ready && Date.now() - stableSince >= SETTLE_MS && frames >= SETTLE_FRAMES) return {...s, frame: undefined};
 		await page.waitForTimeout(250);
 	}
 	throw new Error(`not settled after ${TIMEOUT_MS} ms, last state ${last}`);

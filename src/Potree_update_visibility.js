@@ -27,7 +27,7 @@ export function updatePointClouds(pointclouds, camera, renderer){
 		pointcloud.updateVisibleBounds();
 	}
 
-	exports.lru.freeMemory();
+	Potree.lru.freeMemory();
 
 	return result;
 };
@@ -59,9 +59,6 @@ export function updateVisibilityStructures(pointclouds, camera, renderer) {
 		let world = pointcloud.matrixWorld;
 		
 		// use close near plane for frustum intersection
-		let frustumCam = camera.clone();
-		frustumCam.near = Math.min(camera.near, 0.1);
-		frustumCam.updateProjectionMatrix();
 		let proj = camera.projectionMatrix;
 
 		let fm = new THREE.Matrix4().multiply(proj).multiply(viewI).multiply(world);
@@ -99,6 +96,41 @@ export function updateVisibilityStructures(pointclouds, camera, renderer) {
 	};
 };
 
+
+/**
+ * Clip box as a frustum (6 planes) in the point cloud's object space, used to skip octree nodes
+ * outside the clip boxes. Same math as before; it used to run for every node and every clip box
+ * each frame and is now computed once per clip box per frame (see updateVisibility).
+ */
+function computeClipBoxFrustum(pointcloud, clipBox){
+	let pcWorldInverse = pointcloud.matrixWorld.clone().invert();
+	// note: multiply() mutates pcWorldInverse, so the points below are transformed by
+	// pcWorldInverse * clipBox.matrixWorld (clip box space -> point cloud object space)
+	let toPCObject = pcWorldInverse.multiply(clipBox.box.matrixWorld);
+
+	let px = new THREE.Vector3(+0.5, 0, 0).applyMatrix4(pcWorldInverse);
+	let nx = new THREE.Vector3(-0.5, 0, 0).applyMatrix4(pcWorldInverse);
+	let py = new THREE.Vector3(0, +0.5, 0).applyMatrix4(pcWorldInverse);
+	let ny = new THREE.Vector3(0, -0.5, 0).applyMatrix4(pcWorldInverse);
+	let pz = new THREE.Vector3(0, 0, +0.5).applyMatrix4(pcWorldInverse);
+	let nz = new THREE.Vector3(0, 0, -0.5).applyMatrix4(pcWorldInverse);
+
+	let pxN = new THREE.Vector3().subVectors(nx, px).normalize();
+	let nxN = pxN.clone().multiplyScalar(-1);
+	let pyN = new THREE.Vector3().subVectors(ny, py).normalize();
+	let nyN = pyN.clone().multiplyScalar(-1);
+	let pzN = new THREE.Vector3().subVectors(nz, pz).normalize();
+	let nzN = pzN.clone().multiplyScalar(-1);
+
+	let pxPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(pxN, px);
+	let nxPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(nxN, nx);
+	let pyPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(pyN, py);
+	let nyPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(nyN, ny);
+	let pzPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(pzN, pz);
+	let nzPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(nzN, nz);
+
+	return new THREE.Frustum(pxPlane, nxPlane, pyPlane, nyPlane, pzPlane, nzPlane);
+}
 
 export function updateVisibility(pointclouds, camera, renderer){
 
@@ -155,6 +187,17 @@ export function updateVisibility(pointclouds, camera, renderer){
 		}
 	}
 
+	// clip box frustums, once per frame. Keyed by point cloud, then clip box: the same clip box is
+	// usually shared by all point clouds, but the frustum is in each point cloud's object space.
+	let clipBoxFrustumsByPointcloud = new Map();
+	for(let pointcloud of pointclouds){
+		let frustums = new Map();
+		for(let clipBox of pointcloud.material.clipBoxes){
+			frustums.set(clipBox, computeClipBoxFrustum(pointcloud, clipBox));
+		}
+		clipBoxFrustumsByPointcloud.set(pointcloud, frustums);
+	}
+
 	while (priorityQueue.size() > 0) {
 		let element = priorityQueue.pop();
 		let node = element.node;
@@ -195,47 +238,7 @@ export function updateVisibility(pointclouds, camera, renderer){
 
 			for(let clipBox of clipBoxes){
 
-				let pcWorldInverse = pointcloud.matrixWorld.clone().invert();
-				let toPCObject = pcWorldInverse.multiply(clipBox.box.matrixWorld);
-
-				let px = new THREE.Vector3(+0.5, 0, 0).applyMatrix4(pcWorldInverse);
-				let nx = new THREE.Vector3(-0.5, 0, 0).applyMatrix4(pcWorldInverse);
-				let py = new THREE.Vector3(0, +0.5, 0).applyMatrix4(pcWorldInverse);
-				let ny = new THREE.Vector3(0, -0.5, 0).applyMatrix4(pcWorldInverse);
-				let pz = new THREE.Vector3(0, 0, +0.5).applyMatrix4(pcWorldInverse);
-				let nz = new THREE.Vector3(0, 0, -0.5).applyMatrix4(pcWorldInverse);
-
-				let pxN = new THREE.Vector3().subVectors(nx, px).normalize();
-				let nxN = pxN.clone().multiplyScalar(-1);
-				let pyN = new THREE.Vector3().subVectors(ny, py).normalize();
-				let nyN = pyN.clone().multiplyScalar(-1);
-				let pzN = new THREE.Vector3().subVectors(nz, pz).normalize();
-				let nzN = pzN.clone().multiplyScalar(-1);
-
-				let pxPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(pxN, px);
-				let nxPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(nxN, nx);
-				let pyPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(pyN, py);
-				let nyPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(nyN, ny);
-				let pzPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(pzN, pz);
-				let nzPlane = new THREE.Plane().setFromNormalAndCoplanarPoint(nzN, nz);
-
-				//if(window.debugdraw !== undefined && window.debugdraw === true && node.name === "r60"){
-
-				//	Potree.utils.debugPlane(viewer.scene.scene, pxPlane, 1, 0xFF0000);
-				//	Potree.utils.debugPlane(viewer.scene.scene, nxPlane, 1, 0x990000);
-				//	Potree.utils.debugPlane(viewer.scene.scene, pyPlane, 1, 0x00FF00);
-				//	Potree.utils.debugPlane(viewer.scene.scene, nyPlane, 1, 0x009900);
-				//	Potree.utils.debugPlane(viewer.scene.scene, pzPlane, 1, 0x0000FF);
-				//	Potree.utils.debugPlane(viewer.scene.scene, nzPlane, 1, 0x000099);
-
-				//	Potree.utils.debugBox(viewer.scene.scene, box, new THREE.Matrix4(), 0x00FF00);
-				//	Potree.utils.debugBox(viewer.scene.scene, box, pointcloud.matrixWorld, 0xFF0000);
-				//	Potree.utils.debugBox(viewer.scene.scene, clipBox.box.boundingBox, clipBox.box.matrixWorld, 0xFF0000);
-
-				//	window.debugdraw = false;
-				//}
-
-				let frustum = new THREE.Frustum(pxPlane, nxPlane, pyPlane, nyPlane, pzPlane, nzPlane);
+				let frustum = clipBoxFrustumsByPointcloud.get(pointcloud).get(clipBox);
 				let intersects = frustum.intersectsBox(box);
 
 				if(intersects){
@@ -307,7 +310,7 @@ export function updateVisibility(pointclouds, camera, renderer){
 		}
 
 		if (node.isTreeNode()) {
-			exports.lru.touch(node.geometryNode);
+			Potree.lru.touch(node.geometryNode);
 			node.sceneNode.visible = true;
 			node.sceneNode.material = pointcloud.material;
 
@@ -337,8 +340,8 @@ export function updateVisibility(pointclouds, camera, renderer){
 				node.boundingBoxNode.visible = false;
 			}
 
-			// if(node.boundingBoxNode !== undefined && exports.debug.allowedNodes !== undefined){
-			// 	if(!exports.debug.allowedNodes.includes(node.name)){
+			// if(node.boundingBoxNode !== undefined && Potree.debug.allowedNodes !== undefined){
+			// 	if(!Potree.debug.allowedNodes.includes(node.name)){
 			// 		node.boundingBoxNode.visible = false;
 			// 	}
 			// }

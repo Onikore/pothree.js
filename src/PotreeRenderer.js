@@ -697,7 +697,7 @@ export class Renderer {
 
 	renderNodes(octree, nodes, visibilityTextureData, camera, target, shader, params) {
 
-		if (exports.measureTimings) performance.mark("renderNodes-start");
+		if (Potree.measureTimings) performance.mark("renderNodes-start");
 
 		let gl = this.gl;
 
@@ -716,8 +716,8 @@ export class Renderer {
 		let i = 0;
 		for (let node of nodes) {
 
-			if(exports.debug.allowedNodes !== undefined){
-				if(!exports.debug.allowedNodes.includes(node.name)){
+			if(Potree.debug.allowedNodes !== undefined){
+				if(!Potree.debug.allowedNodes.includes(node.name)){
 					continue;
 				}
 			}
@@ -1035,7 +1035,7 @@ export class Renderer {
 
 		gl.bindVertexArray(null);
 
-		if (exports.measureTimings) {
+		if (Potree.measureTimings) {
 			performance.mark("renderNodes-end");
 			performance.measure("render.renderNodes", "renderNodes-start", "renderNodes-end");
 		}

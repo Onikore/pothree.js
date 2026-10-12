@@ -31,7 +31,7 @@ export class CameraAnimation extends EventDispatcher{
 
 		this.controlPoints = [];
 
-		this.uuid = THREE.Math.generateUUID();
+		this.uuid = THREE.MathUtils.generateUUID();
 
 		this.node = new THREE.Object3D();
 		this.node.name = "camera animation";
@@ -302,7 +302,6 @@ export class CameraAnimation extends EventDispatcher{
 		const geometry = new LineGeometry();
 
 		geometry.setPositions(positions);
-		geometry.verticesNeedUpdate = true;
 		geometry.computeBoundingSphere();
 
 		let material = new LineMaterial({ 
@@ -338,7 +337,6 @@ export class CameraAnimation extends EventDispatcher{
 			}
 
 			this.line.geometry.setPositions(curvePositions);
-			this.line.geometry.verticesNeedUpdate = true;
 			this.line.geometry.computeBoundingSphere();
 			this.line.position.copy(first);
 			this.line.computeLineDistances();
@@ -365,7 +363,6 @@ export class CameraAnimation extends EventDispatcher{
 			}
 
 			this.targetLine.geometry.setPositions(curvePositions);
-			this.targetLine.geometry.verticesNeedUpdate = true;
 			this.targetLine.geometry.computeBoundingSphere();
 			this.targetLine.position.copy(first);
 			this.targetLine.computeLineDistances();

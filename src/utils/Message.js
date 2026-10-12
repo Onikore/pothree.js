@@ -4,7 +4,7 @@ export class Message{
 	constructor(content){
 		this.content = content;
 
-		let closeIcon = `${exports.resourcePath}/icons/close.svg`;
+		let closeIcon = `${Potree.resourcePath}/icons/close.svg`;
 
 		this.element = $(`
 			<div class="potree_message">
