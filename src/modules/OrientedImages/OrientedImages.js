@@ -104,7 +104,7 @@ export class OrientedImage{
 		let {mesh, line, fov} = this;
 
 		mesh.updateMatrixWorld();
-		const dir = mesh.getWorldDirection();
+		const dir = mesh.getWorldDirection(new THREE.Vector3());
 		const alpha = THREE.MathUtils.degToRad(fov / 2);
 		const d = -0.5 / Math.tan(alpha);
 		const move = dir.clone().multiplyScalar(d);
@@ -274,7 +274,7 @@ export class OrientedImageLoader{
 			// mesh.rotation.set(rx, ry, rz);
 			// {
 			// 	mesh.updateMatrixWorld();
-			// 	const dir = mesh.getWorldDirection();
+			// 	const dir = mesh.getWorldDirection(new THREE.Vector3());
 			// 	const alpha = THREE.MathUtils.degToRad(cameraParams.fov / 2);
 			// 	const d = -0.5 / Math.tan(alpha);
 			// 	const move = dir.clone().multiplyScalar(d);
@@ -362,7 +362,7 @@ export class OrientedImageLoader{
 				camera.rotation.copy(img.mesh.rotation);
 				{
 					const mesh = img.mesh;
-					const dir = mesh.getWorldDirection();
+					const dir = mesh.getWorldDirection(new THREE.Vector3());
 					const pos = mesh.position;
 					const alpha = THREE.MathUtils.degToRad(fov / 2);
 					const d = 0.5 / Math.tan(alpha);

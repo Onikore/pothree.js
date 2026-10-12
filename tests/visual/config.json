@@ -63,7 +63,8 @@
 			"note": "broken in the original (node.url() after COPC refactor); reference image is ept.png - same page and data in EPT LAZ"
 		},
 		"ept_zstandard": {
-			"note": "broken in the original (node.url() after COPC refactor); reference image is ept.png - same page and data in EPT LAZ"
+			"maxDiff": 0.02,
+			"note": "broken in the original; reference is ept.png, but the zstandard dataset has a different octree (9 nodes vs 16), so adaptive point sizes differ slightly"
 		}
 	},
 	"groups": {

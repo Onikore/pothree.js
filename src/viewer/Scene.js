@@ -70,7 +70,7 @@ export class Scene extends EventDispatcher{
 				let node = stack.pop();
 				let box = node.getBoundingBox();
 
-				let inside = ray.intersectBox(box);
+				let inside = ray.intersectBox(box, new THREE.Vector3());
 
 				if (!inside) {
 					continue;

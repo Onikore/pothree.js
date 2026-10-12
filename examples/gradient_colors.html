@@ -98,7 +98,7 @@
 				e.pointcloud.updateMatrixWorld();
 				let box = e.pointcloud.pcoGeometry.tightBoundingBox.clone();
 				box.applyMatrix4(e.pointcloud.matrixWorld);
-				let center = box.getCenter();
+				let center = box.getCenter(new THREE.Vector3());
 				
 				
 				let annotation = new Potree.Annotation({
@@ -141,7 +141,7 @@
 			e.pointcloud.updateMatrixWorld();
 			let box = e.pointcloud.pcoGeometry.tightBoundingBox.clone();
 			box.applyMatrix4(e.pointcloud.matrixWorld);
-			let center = box.getCenter();
+			let center = box.getCenter(new THREE.Vector3());
 			annotation.position = center;
 			annotation.position.z += 30;
 			//annotation.position = new THREE.Vector3(0, 0, 5);

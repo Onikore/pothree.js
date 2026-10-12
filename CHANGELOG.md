@@ -40,6 +40,10 @@
   `PointCloudArena4D`, `PointCloudArena4DGeometry` и их узлы теперь экспортируются из `Potree`.
   Проверить работу нельзя: сервер тестовых данных Arena4D недоступен.
 - `npm run build` не завершался ошибкой, когда падал rollup.
+- В новых three.js методы вроде `Box3.getCenter()`, `Object3D.getWorldDirection()`,
+  `getWorldQuaternion()`, `Ray.intersectBox()` требуют вектор-приёмник; без него они падали
+  (ориентированные снимки, пример `gradient_colors`, `Scene.estimateHeightAt`, clip volume).
+  **В своём коде передавайте приёмник**: `box.getCenter(new THREE.Vector3())`.
 - **EPT binary и EPT zstandard не загружались вообще** (с добавления COPC в 2023 г.): их загрузчик
   обращался к удалённому `node.url()` и старым полям узла. Переведён на новый API узлов EPT, как
   загрузчик EPT LAZ.

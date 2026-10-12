@@ -270,7 +270,7 @@ export class ClipVolume extends THREE.Object3D{
 
 	updateLocalSystem() {		
 		// extract local coordinate axes
-		let rotQuat = this.getWorldQuaternion();
+		let rotQuat = this.getWorldQuaternion(new THREE.Quaternion());
 		this.localX = new THREE.Vector3(1, 0, 0).applyQuaternion(rotQuat).normalize();
 		this.localY = new THREE.Vector3(0, 1, 0).applyQuaternion(rotQuat).normalize();
 		this.localZ = new THREE.Vector3(0, 0, 1).applyQuaternion(rotQuat).normalize();
