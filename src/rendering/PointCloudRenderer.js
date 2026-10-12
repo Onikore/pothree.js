@@ -122,30 +122,66 @@ export class PointCloudRenderer {
 		this.updateBlending(rm, material, params);
 		this.updateOctreeUniforms(rm, material, octree, camera, target, params, view, viewInv, proj, projInv, shadowMaps);
 
-		// per-node state for onBeforeRenderNode
-		let indices = new Map();
-		for (let i = 0; i < nodes.length; i++) {
-			indices.set(nodes[i], i);
+		for (let name of ["uVNStart", "uDebug", "uLevel", "uNodeSpacing", "uPCIndex"]) {
+			if (!rm.uniforms[name]) {
+				rm.uniforms[name] = {value: 0};
+			}
 		}
+		if (shadowMaps.length > 0) {
+			let size = 16 * shadowMaps.length;
+			if (!rm.uniforms.uShadowWorldView || rm.uniforms.uShadowWorldView.value.length !== size) {
+				rm.uniforms.uShadowWorldView = {value: new Float32Array(size)};
+			}
+		}
+
 		this.state = {
-			octree, material, rm, shadowMaps, visibilityTextureData, indices, view,
+			octree, material, rm, shadowMaps, visibilityTextureData, view,
+			uniforms: rm.uniforms,
 			clipPolygons: material.clipPolygons || [],
+			perOctreeDone: false,
+			extraAttributeName: null,
 		};
 
-		// Make exactly `nodes` visible, all drawn with the internal material and our hook.
-		// Visible nodes always form a subtree from the root (a node's box contains its children's),
-		// so three's traversal reaches every requested node.
-		let touched = new Set([...octree.visibleNodes, ...nodes]);
-		let saved = [];
-		for (let node of touched) {
+		// Each drawn node uses the internal material, its render geometry and our hook. They stay
+		// assigned between calls (nothing else reads them), so a frame only re-assigns what changed.
+		// uPCIndex = position in `nodes` (picking reads it back), kept in userData for the hook.
+		for (let i = 0; i < nodes.length; i++) {
+			let node = nodes[i];
 			let sceneNode = node.sceneNode;
-			saved.push([sceneNode, sceneNode.visible, sceneNode.material, sceneNode.onBeforeRender, sceneNode.geometry]);
-			sceneNode.visible = indices.has(node);
-			sceneNode.material = rm;
-			sceneNode.geometry = this.getRenderGeometry(sceneNode.geometry);
-			sceneNode.onBeforeRender = this.nodeHook;
-			sceneNode.userData.potreeNode = node;
+			let data = sceneNode.userData;
+
+			if (sceneNode.material !== rm) {
+				sceneNode.material = rm;
+			}
+			if (sceneNode.onBeforeRender !== this.nodeHook) {
+				// first draw by this renderer (several PointCloudRenderers may draw the same nodes)
+				data.potreeNode = node;
+				sceneNode.onBeforeRender = this.nodeHook;
+				sceneNode.geometry = this.getRenderGeometry(sceneNode.geometry);
+			}
+			data.pcIndex = i;
 		}
+
+		// Normally `nodes` are the octree's visible nodes, which are exactly the visible scene nodes.
+		// For a subset (picking: nodes on a ray) hide the others during the call. Visible nodes form a
+		// subtree from the root (a node's box contains its children's), so three reaches all of them.
+		let hidden = null;
+		if (nodes !== octree.visibleNodes) {
+			let requested = new Set(nodes);
+			hidden = [];
+			for (let node of octree.visibleNodes) {
+				if (!requested.has(node) && node.sceneNode.visible) {
+					node.sceneNode.visible = false;
+					hidden.push(node.sceneNode);
+				}
+			}
+			for (let node of nodes) {
+				node.sceneNode.visible = true;
+			}
+		}
+
+		// the octree's uniforms changed: upload them with the first node (afterwards only per-node ones)
+		rm.uniformsNeedUpdate = true;
 
 		let autoClear = renderer.autoClear;
 		renderer.autoClear = false;
@@ -153,12 +189,13 @@ export class PointCloudRenderer {
 		renderer.render(octree, camera);
 
 		renderer.autoClear = autoClear;
-		for (let [sceneNode, visible, mat, hook, geometry] of saved) {
-			sceneNode.visible = visible;
-			sceneNode.material = mat;
-			sceneNode.onBeforeRender = hook;
-			sceneNode.geometry = geometry;
+
+		if (hidden) {
+			for (let sceneNode of hidden) {
+				sceneNode.visible = true;
+			}
 		}
+
 		this.state = null;
 	}
 
@@ -414,93 +451,112 @@ export class PointCloudRenderer {
 	}
 
 	/**
-	 * Called right before three draws a node (via nodeHook): per-node uniforms and attribute aliases.
+	 * Called right before three draws a node (via nodeHook): per-node uniforms.
+	 * Runs once per node and frame, so it avoids allocations and lookups by name: values that are
+	 * the same for every node of the octree (GPS time and extra attribute scale/offset) are computed
+	 * once per renderOctree call (`perOctreeDone`).
 	 * @param {PointCloudOctreeNode} node
-	 * @param {THREE.BufferGeometry} geometry the node's geometry
+	 * @param {THREE.BufferGeometry} geometry the node's render geometry (see getRenderGeometry)
 	 */
 	onBeforeRenderNode(node, geometry) {
 		const s = this.state;
-		const rm = s.rm;
-		const u = rm.uniforms;
-		let set = (name, value) => {
-			if (u[name]) {
-				u[name].value = value;
-			} else {
-				u[name] = {value: value};
-			}
-		};
+		const u = s.uniforms;
+
+		if (s.visibilityTextureData) {
+			u.uVNStart.value = s.visibilityTextureData.offsets.get(node);
+		}
+
+		u.uDebug.value = node.debug ? true : false;
+		u.uLevel.value = node.getLevel();
+		u.uNodeSpacing.value = node.geometryNode.estimatedSpacing;
+		u.uPCIndex.value = node.sceneNode.userData.pcIndex;
 
 		let world = node.sceneNode.matrixWorld;
 
-		if (s.visibilityTextureData) {
-			set("uVNStart", s.visibilityTextureData.offsets.get(node));
-		}
-
-		set("uDebug", node.debug ? true : false);
-		set("uLevel", node.getLevel());
-		set("uNodeSpacing", node.geometryNode.estimatedSpacing);
-		set("uPCIndex", s.indices.get(node));
-
 		if (s.clipPolygons.length > 0) {
-			let clipPolygonVCount = [];
-			let worldViewProj = [];
-			let vertices = new Array(8 * 3 * s.clipPolygons.length);
-
-			for (let i = 0; i < s.clipPolygons.length; i++) {
-				let clipPolygon = s.clipPolygons[i];
-				let wvp = clipPolygon.projMatrix.clone().multiply(clipPolygon.viewMatrix).multiply(world);
-
-				clipPolygonVCount.push(clipPolygon.markers.length);
-				worldViewProj.push(...wvp.elements);
-
-				for (let j = 0; j < clipPolygon.markers.length; j++) {
-					let p = clipPolygon.markers[j].position;
-					vertices[i * 24 + (j * 3 + 0)] = p.x;
-					vertices[i * 24 + (j * 3 + 1)] = p.y;
-					vertices[i * 24 + (j * 3 + 2)] = p.z;
-				}
-			}
-
-			set("uClipPolygonVCount", clipPolygonVCount);
-			set("uClipPolygonWVP", worldViewProj);
-			set("uClipPolygonVertices", vertices);
+			this.setClipPolygonUniforms(s, world);
 		}
 
 		if (s.shadowMaps.length > 0) {
-			set("uShadowWorldView", s.shadowMaps.flatMap(sm =>
-				this.tmpMatrix.multiplyMatrices(sm.camera.matrixWorldInverse, world).toArray()));
+			let elements = u.uShadowWorldView.value;
+			for (let i = 0; i < s.shadowMaps.length; i++) {
+				this.tmpMatrix.multiplyMatrices(s.shadowMaps[i].camera.matrixWorldInverse, world);
+				elements.set(this.tmpMatrix.elements, 16 * i);
+			}
 		}
 
-		if (geometry.attributes["gps-time"]) {
-			const attGPS = s.octree.getAttribute("gps-time");
-
-			let initialRange = attGPS.initialRange;
-			let initialRangeSize = initialRange[1] - initialRange[0];
-
-			let globalRange = attGPS.range;
-			let globalRangeSize = globalRange[1] - globalRange[0];
-
-			let scale = initialRangeSize / globalRangeSize;
-			let offset = -(globalRange[0] - initialRange[0]) / initialRangeSize;
-
-			scale = Number.isNaN(scale) ? 1 : scale;
-			offset = Number.isNaN(offset) ? 0 : offset;
-
-			set("uGpsScale", scale);
-			set("uGpsOffset", offset);
-
-			let uFilterGPSTimeClipRange = s.material.uniforms.uFilterGPSTimeClipRange.value;
-			set("uFilterGPSTimeClipRange", [
-				(uFilterGPSTimeClipRange[0] - globalRange[0]) / globalRangeSize,
-				(uFilterGPSTimeClipRange[1] - globalRange[0]) / globalRangeSize,
-			]);
+		if (!s.perOctreeDone) {
+			// legacy: set per node if the node has the attribute; identical for all nodes of an octree
+			if (geometry.attributes["gps-time"]) {
+				this.setGpsUniforms(s);
+			}
+			this.setExtraAttributeUniforms(s);
+			s.perOctreeDone = true;
 		}
 
-		this.updateAttributeAliases(geometry, s.octree, s.material, set);
+		if (s.extraAttributeName !== null) {
+			let attribute = geometry.attributes[s.extraAttributeName];
+			if (geometry.attributes.aExtra !== attribute) {
+				geometry.setAttribute("aExtra", attribute);
+			}
+		} else if (geometry.attributes.aExtra) {
+			geometry.deleteAttribute("aExtra");
+		}
 
 		// three uploads material uniforms only when the program or material changes; all nodes
 		// share one material, so force the upload (three skips GL calls for unchanged values)
-		rm.uniformsNeedUpdate = true;
+		s.rm.uniformsNeedUpdate = true;
+	}
+
+	setClipPolygonUniforms(s, world) {
+		const u = s.uniforms;
+		let clipPolygonVCount = [];
+		let worldViewProj = [];
+		let vertices = new Array(8 * 3 * s.clipPolygons.length);
+
+		for (let i = 0; i < s.clipPolygons.length; i++) {
+			let clipPolygon = s.clipPolygons[i];
+			let wvp = clipPolygon.projMatrix.clone().multiply(clipPolygon.viewMatrix).multiply(world);
+
+			clipPolygonVCount.push(clipPolygon.markers.length);
+			worldViewProj.push(...wvp.elements);
+
+			for (let j = 0; j < clipPolygon.markers.length; j++) {
+				let p = clipPolygon.markers[j].position;
+				vertices[i * 24 + (j * 3 + 0)] = p.x;
+				vertices[i * 24 + (j * 3 + 1)] = p.y;
+				vertices[i * 24 + (j * 3 + 2)] = p.z;
+			}
+		}
+
+		setUniform(u, "uClipPolygonVCount", clipPolygonVCount);
+		setUniform(u, "uClipPolygonWVP", worldViewProj);
+		setUniform(u, "uClipPolygonVertices", vertices);
+	}
+
+	setGpsUniforms(s) {
+		const attGPS = s.octree.getAttribute("gps-time");
+
+		let initialRange = attGPS.initialRange;
+		let initialRangeSize = initialRange[1] - initialRange[0];
+
+		let globalRange = attGPS.range;
+		let globalRangeSize = globalRange[1] - globalRange[0];
+
+		let scale = initialRangeSize / globalRangeSize;
+		let offset = -(globalRange[0] - initialRange[0]) / initialRangeSize;
+
+		scale = Number.isNaN(scale) ? 1 : scale;
+		offset = Number.isNaN(offset) ? 0 : offset;
+
+		setUniform(s.uniforms, "uGpsScale", scale);
+		setUniform(s.uniforms, "uGpsOffset", offset);
+
+		let uFilterGPSTimeClipRange = s.material.uniforms.uFilterGPSTimeClipRange.value;
+		setUniform(s.uniforms, "uFilterGPSTimeClipRange", [
+			(uFilterGPSTimeClipRange[0] - globalRange[0]) / globalRangeSize,
+			(uFilterGPSTimeClipRange[1] - globalRange[0]) / globalRangeSize,
+		]);
 	}
 
 	/**
@@ -511,6 +567,9 @@ export class PointCloudRenderer {
 	 * changed: Potree code (profile, exporters, point queries) iterates its attributes.
 	 */
 	getRenderGeometry(geometry) {
+		if (geometry.userData.source) {
+			geometry = geometry.userData.source; // already a render geometry
+		}
 		let rg = this.renderGeometries.get(geometry);
 		let names = Object.keys(geometry.attributes);
 
@@ -548,47 +607,45 @@ export class PointCloudRenderer {
 	}
 
 	/**
-	 * Points `aExtra` of the render geometry at the active "extra" attribute (one without a fixed
-	 * shader name) and sets its scale/offset uniforms, as the legacy renderer did per node.
+	 * Active "extra" attribute (one without a fixed shader name, bound as `aExtra`): remembers its
+	 * name for the node hook and sets its scale/offset uniforms, as the legacy renderer did per node.
 	 */
-	updateAttributeAliases(geometry, octree, material, set) {
-		let a = geometry.attributes;
+	setExtraAttributeUniforms(s) {
+		let name = s.material.activeAttributeName;
+		let root = s.octree.pcoGeometry.root;
+		let attributes = root && root.geometry ? root.geometry.attributes : {};
+		let isExtraAttribute = SHADER_ATTRIBUTE_NAMES[name] === undefined && attributes[name] !== undefined;
 
-		let name = material.activeAttributeName;
-		let isExtraAttribute = SHADER_ATTRIBUTE_NAMES[name] === undefined && a[name] !== undefined;
+		s.extraAttributeName = isExtraAttribute ? name : null;
 
-		if (isExtraAttribute) {
-			if (a.aExtra !== a[name]) {
-				geometry.setAttribute("aExtra", a[name]);
-			}
-
-			const attExtra = octree.pcoGeometry.pointAttributes.attributes.find(at => at.name === name);
-
-			let range = material.getRange(name);
-			if (!range) {
-				range = attExtra.range;
-			}
-			if (!range) {
-				range = [0, 1];
-			}
-
-			let initialRange = attExtra.initialRange;
-			let initialRangeSize = initialRange[1] - initialRange[0];
-
-			let globalRange = range;
-			let globalRangeSize = globalRange[1] - globalRange[0];
-
-			let scale = initialRangeSize / globalRangeSize;
-			let offset = -(globalRange[0] - initialRange[0]) / initialRangeSize;
-
-			scale = Number.isNaN(scale) ? 1 : scale;
-			offset = Number.isNaN(offset) ? 0 : offset;
-
-			set("uExtraScale", scale);
-			set("uExtraOffset", offset);
-		} else if (a.aExtra) {
-			geometry.deleteAttribute("aExtra");
+		if (!isExtraAttribute) {
+			return;
 		}
+
+		const attExtra = s.octree.pcoGeometry.pointAttributes.attributes.find(at => at.name === name);
+
+		let range = s.material.getRange(name);
+		if (!range) {
+			range = attExtra.range;
+		}
+		if (!range) {
+			range = [0, 1];
+		}
+
+		let initialRange = attExtra.initialRange;
+		let initialRangeSize = initialRange[1] - initialRange[0];
+
+		let globalRange = range;
+		let globalRangeSize = globalRange[1] - globalRange[0];
+
+		let scale = initialRangeSize / globalRangeSize;
+		let offset = -(globalRange[0] - initialRange[0]) / initialRangeSize;
+
+		scale = Number.isNaN(scale) ? 1 : scale;
+		offset = Number.isNaN(offset) ? 0 : offset;
+
+		setUniform(s.uniforms, "uExtraScale", scale);
+		setUniform(s.uniforms, "uExtraOffset", offset);
 	}
 }
 
@@ -644,4 +701,13 @@ export function createPointCloudRenderer(threeRenderer, LegacyRenderer) {
 		|| globalThis.POTREE_POINT_CLOUD_RENDERER // set by tests/visual/run.mjs --legacy-renderer
 		|| "three";
 	return type === "legacy" ? new LegacyRenderer(threeRenderer) : new PointCloudRenderer(threeRenderer);
+}
+
+function setUniform(uniforms, name, value) {
+	let uniform = uniforms[name];
+	if (uniform) {
+		uniform.value = value;
+	} else {
+		uniforms[name] = {value: value};
+	}
 }

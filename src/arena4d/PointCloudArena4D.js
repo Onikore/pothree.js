@@ -151,29 +151,8 @@ export class PointCloudArena4D extends PointCloudTree{
 		let sceneNode = new THREE.Points(geometryNode.geometry, this.material);
 
 		sceneNode.frustumCulled = false;
-		sceneNode.onBeforeRender = (_this, scene, camera, geometry, material, group) => {
-			if (material.program) {
-				_this.getContext().useProgram(material.program.program);
-
-				if (material.program.getUniforms().map.level) {
-					let level = geometryNode.getLevel();
-					material.uniforms.level.value = level;
-					material.program.getUniforms().map.level.setValue(_this.getContext(), level);
-				}
-
-				if (this.visibleNodeTextureOffsets && material.program.getUniforms().map.vnStart) {
-					let vnStart = this.visibleNodeTextureOffsets.get(node);
-					material.uniforms.vnStart.value = vnStart;
-					material.program.getUniforms().map.vnStart.setValue(_this.getContext(), vnStart);
-				}
-
-				if (material.program.getUniforms().map.pcIndex) {
-					let i = node.pcIndex ? node.pcIndex : this.visibleNodes.indexOf(node);
-					material.uniforms.pcIndex.value = i;
-					material.program.getUniforms().map.pcIndex.setValue(_this.getContext(), i);
-				}
-			}
-		};
+		// per-node uniforms are set by PointCloudRenderer (its own onBeforeRender); the old
+		// three.js path that wrote into material.program (private three API) was removed
 
 		node.geometryNode = geometryNode;
 		node.sceneNode = sceneNode;

@@ -32,6 +32,13 @@ await new Promise(r => server.listen(0, "127.0.0.1", r));
 const browser = await pw.chromium.launch({args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]});
 const page = await browser.newPage({viewport: {width: 1280, height: 800}});
 await page.goto(`http://127.0.0.1:${server.address().port}/examples/${name}.html`);
+const budget = Number(process.env.BUDGET ?? 3_000_000);
+await page.waitForFunction(() => window.viewer || window.potreeViewer);
+await page.evaluate((budget) => {
+	const v = window.viewer || window.potreeViewer;
+	v.setPointBudget(budget);
+	v.setMinNodeSize(0); // many small nodes: per-node overhead is what differs between the renderers
+}, budget);
 
 // settle: nothing loading and visible nodes unchanged for 5 s
 let last = "", since = Date.now();
@@ -41,7 +48,7 @@ for (const start = Date.now(); Date.now() - start < 180_000;) {
 		return v && JSON.stringify([Potree.numNodesLoading, v.scene.pointclouds.map(pc => pc.visibleNodes.length)]);
 	});
 	if (s !== last) { last = s; since = Date.now(); }
-	if (s && JSON.parse(s)[0] === 0 && Date.now() - since > 5000) break;
+	if (s && JSON.parse(s)[0] === 0 && Date.now() - since > 10000) break;
 	await page.waitForTimeout(500);
 }
 
@@ -51,33 +58,37 @@ const result = await page.evaluate((iterations) => {
 	const r = v.renderer, gl = r.getContext();
 	const camera = v.scene.getActiveCamera();
 	const renderers = {legacy: new Potree.Renderer(r), three: new Potree.PointCloudRenderer(r)};
-	// cpu: time of the render() call itself (JS + three.js + GL command submission) - the cost
+	// cpu: time of the render() calls themselves (JS + three.js + GL command submission) - the cost
 	// three.js adds per node shows up here. total: until the GPU (here SwiftShader) has finished.
+	// Timed per block of 10 calls (browser timers are coarse, ~0.1 ms) and divided by 10.
 	const times = {legacy: {cpu: [], total: []}, three: {cpu: [], total: []}};
 
-	const run = (key) => {
+	const block = (key) => {
+		gl.finish();
 		const t0 = performance.now();
-		renderers[key].render(v.scene.scenePointCloud, camera, null, {});
+		for (let i = 0; i < 10; i++) {
+			renderers[key].render(v.scene.scenePointCloud, camera, null, {});
+		}
 		const t1 = performance.now();
 		gl.finish();
 		const t2 = performance.now();
-		times[key].cpu.push(t1 - t0);
-		times[key].total.push(t2 - t0);
+		times[key].cpu.push((t1 - t0) / 10);
+		times[key].total.push((t2 - t0) / 10);
 	};
 
-	for (let k of ["legacy", "three"]) for (let i = 0; i < 20; i++) run(k); // warm up, compile
+	for (let k of ["legacy", "three"]) for (let i = 0; i < 3; i++) block(k); // warm up, compile
 	for (let k of ["legacy", "three"]) { times[k].cpu.length = 0; times[k].total.length = 0; }
 
-	for (let block = 0; block < iterations / 10; block++) {
-		for (let k of (block % 2 ? ["legacy", "three"] : ["three", "legacy"])) {
-			for (let i = 0; i < 10; i++) run(k);
+	for (let b = 0; b < iterations / 10; b++) {
+		for (let k of (b % 2 ? ["legacy", "three"] : ["three", "legacy"])) {
+			block(k);
 		}
 	}
 
 	const stats = (a) => {
 		a = [...a].sort((x, y) => x - y);
 		const q = p => a[Math.min(a.length - 1, Math.floor(p * a.length))];
-		return {median: +q(0.5).toFixed(2), p90: +q(0.9).toFixed(2), p99: +q(0.99).toFixed(2), mean: +(a.reduce((s, x) => s + x, 0) / a.length).toFixed(2)};
+		return {median: +q(0.5).toFixed(3), p90: +q(0.9).toFixed(3), max: +a[a.length - 1].toFixed(3), mean: +(a.reduce((s, x) => s + x, 0) / a.length).toFixed(3)};
 	};
 	const pcs = v.scene.pointclouds;
 	return {

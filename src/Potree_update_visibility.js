@@ -312,7 +312,6 @@ export function updateVisibility(pointclouds, camera, renderer){
 		if (node.isTreeNode()) {
 			Potree.lru.touch(node.geometryNode);
 			node.sceneNode.visible = true;
-			node.sceneNode.material = pointcloud.material;
 
 			visibleNodes.push(node);
 			pointcloud.visibleNodes.push(node);
