@@ -31,6 +31,9 @@ export class PointCloudRenderer {
 		/** PointCloudMaterial -> internal RawShaderMaterial */
 		this.renderMaterials = new WeakMap();
 
+		/** PointCloudMaterial -> last visibility texture input/result, see renderOctree */
+		this.visibilityCache = new WeakMap();
+
 		/** node BufferGeometry -> geometry three draws (same BufferAttributes, shader names) */
 		this.renderGeometries = new WeakMap();
 
@@ -107,12 +110,22 @@ export class PointCloudRenderer {
 				material.activeAttributeName === "level of detail") {
 
 				let vnNodes = (params.vnTextureNodes != null) ? params.vnTextureNodes : nodes;
-				visibilityTextureData = octree.computeVisibilityTextureData(vnNodes, camera);
 
-				const vnt = material.visibleNodesTexture;
-				const data = vnt.image.data;
-				data.set(visibilityTextureData.data);
-				vnt.needsUpdate = true;
+				// The texture only depends on the node set: recompute and re-upload it only when that
+				// changed (not every frame while the camera rests, nor for each pass of a frame).
+				let cached = this.visibilityCache.get(material);
+				if (cached && cached.octree === octree && sameNodes(cached.nodes, vnNodes)) {
+					visibilityTextureData = cached.result;
+				} else {
+					visibilityTextureData = octree.computeVisibilityTextureData(vnNodes, camera);
+
+					const vnt = material.visibleNodesTexture;
+					const data = vnt.image.data;
+					data.set(visibilityTextureData.data);
+					vnt.needsUpdate = true;
+
+					this.visibilityCache.set(material, {octree, nodes: vnNodes.slice(), result: visibilityTextureData});
+				}
 			}
 		}
 
@@ -736,4 +749,17 @@ function setUniform(uniforms, name, value) {
 	} else {
 		uniforms[name] = {value: value};
 	}
+}
+
+/** Same nodes in the same order (element identity). */
+function sameNodes(a, b) {
+	if (a.length !== b.length) {
+		return false;
+	}
+	for (let i = 0; i < a.length; i++) {
+		if (a[i] !== b[i]) {
+			return false;
+		}
+	}
+	return true;
 }

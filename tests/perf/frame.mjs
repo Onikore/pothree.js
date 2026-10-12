@@ -1,7 +1,8 @@
 // Whole-frame profile while the camera orbits: frame times and the hottest JS functions.
 //
 //   node tests/perf/frame.mjs [example] [seconds]          default: ca13 20
-//   env: BUDGET (default 3M), GL=nvidia (real GPU via Vulkan; default SwiftShader), UNCAPPED=1 (no vsync)
+//   env: BUDGET (default 3M), GL=nvidia (real GPU via Vulkan; default SwiftShader), UNCAPPED=1 (no vsync),
+//        ANNOTATIONS=N (add N annotations)
 //
 // Waits until loading settles, then rotates the view by a fixed angle per frame (so LOD selection,
 // node loading and rendering all run), records rAF frame times and a CPU profile (CDP sampling),
@@ -57,6 +58,22 @@ for (const start = Date.now(); Date.now() - start < 180_000;) {
 	if (s !== last) { last = s; since = Date.now(); }
 	if (JSON.parse(s)[0] === 0 && Date.now() - since > 5000) break;
 	await page.waitForTimeout(500);
+}
+
+// ANNOTATIONS=N: add N annotations spread over the point cloud (DOM cost per frame)
+const annotations = Number(process.env.ANNOTATIONS ?? 0);
+if (annotations > 0) {
+	await page.evaluate((n) => {
+		const v = window.viewer || window.potreeViewer;
+		const box = v.scene.pointclouds[0].getBoundingBoxWorld();
+		const size = box.getSize(new box.min.constructor());
+		for (let i = 0; i < n; i++) {
+			// deterministic spread
+			const f = (k) => ((i * k) % 997) / 997;
+			const position = box.min.clone().add(size.clone().multiply({x: f(31), y: f(57), z: f(83)}));
+			v.scene.annotations.add(new Potree.Annotation({position, title: `A${i}`}));
+		}
+	}, annotations);
 }
 
 // orbit: rotate the view each frame, record frame intervals

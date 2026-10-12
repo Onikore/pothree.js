@@ -21,7 +21,7 @@
 </head>
 
 <body>
-	<script src="../libs/jquery/jquery-3.1.1.min.js"></script>
+	<script src="../libs/jquery/jquery-3.7.1.min.js"></script>
 	<script src="../libs/spectrum/spectrum.js"></script>
 	<script src="../libs/jquery-ui/jquery-ui.min.js"></script>
 	<script src="../libs/other/BinaryHeap.js"></script>
@@ -336,8 +336,7 @@
 					color: 0x226666,
 					metalness: 0,
 					roughness: 0.5,
-					clearCoat:  1.0,
-					clearCoatRoughness: 1.0,
+					// (clearCoat/clearCoatRoughness were here: wrong names, ignored by three.js since r113 - removed)
 					reflectivity: 1.0
 				} );
 				mesh2 = new THREE.Mesh( geometry, material );

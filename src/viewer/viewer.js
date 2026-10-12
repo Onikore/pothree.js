@@ -1449,15 +1449,22 @@ export class Viewer extends EventDispatcher{
 				}
 			}
 
-			element.css("left", screenPos.x + "px");
-			element.css("top", screenPos.y + "px");
+			// Write styles only when they change, without jQuery: this runs for every annotation every
+			// frame, and each style write can trigger a style/layout recalculation. Compared with the
+			// current inline style (reading it causes no layout), which jQuery UI draggable also writes.
+			let style = element[0].style;
+			// rounded to 0.01 px so the value reads back identically (browsers normalize long decimals)
+			let left = Math.round(screenPos.x * 100) / 100 + "px", top = Math.round(screenPos.y * 100) / 100 + "px";
+			if (style.left !== left) { style.left = left; }
+			if (style.top !== top) { style.top = top; }
 			//element.css("display", "block");
 
 			let zIndex = 10000000 - distance * (10000000 / this.scene.cameraP.far);
 			if(annotation.descriptionVisible){
 				zIndex += 10000000;
 			}
-			element.css("z-index", parseInt(zIndex));
+			let zIndexValue = String(parseInt(zIndex));
+			if (style.zIndex !== zIndexValue) { style.zIndex = zIndexValue; }
 
 			if(annotation.children.length > 0){
 				let expand = screenSize > annotation.collapseThreshold || annotation.boundingBox.containsPoint(this.scene.getActiveCamera().position);
