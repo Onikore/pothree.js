@@ -58,6 +58,12 @@
 		},
 		"arena4d": {
 			"skip": "Arena4D test server answers 503"
+		},
+		"ept_binary": {
+			"note": "broken in the original (node.url() after COPC refactor); reference image is ept.png - same page and data in EPT LAZ"
+		},
+		"ept_zstandard": {
+			"note": "broken in the original (node.url() after COPC refactor); reference image is ept.png - same page and data in EPT LAZ"
 		}
 	},
 	"groups": {

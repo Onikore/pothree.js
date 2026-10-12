@@ -14,7 +14,9 @@ export class EptBinaryLoader {
 	load(node) {
 		if (node.loaded) return;
 
-		let url = node.url() + this.extension();
+		// EPT nodes are addressed by key since COPC support (f7ac011b); node.url() no longer exists.
+		const { Key } = window.Copc;
+		let url = `${node.owner.base}/ept-data/${Key.toString(node.key)}${this.extension()}`;
 
 		let xhr = XHRFactory.createXMLHttpRequest();
 		xhr.open('GET', url, true);
@@ -99,13 +101,16 @@ export class EptBinaryLoader {
 			Potree.workerPool.returnWorker(workerPath, worker);
 		};
 
-		let toArray = (v) => [v.x, v.y, v.z];
+		// Same values the pre-COPC code passed (node.ept.eptScale/eptOffset, node.key.b.min):
+		// scale/offset of the X, Y, Z dimensions from the EPT schema and the node's minimum corner.
+		let schema = node.owner.ept.schema;
+		let xyz = ['X', 'Y', 'Z'].map(name => schema.find(dim => dim.name === name));
 		let message = {
 			buffer: buffer,
-			schema: node.ept.schema,
-			scale: node.ept.eptScale,
-			offset: node.ept.eptOffset,
-			mins: toArray(node.key.b.min)
+			schema: schema,
+			scale: {x: xyz[0].scale || 1, y: xyz[1].scale || 1, z: xyz[2].scale || 1},
+			offset: {x: xyz[0].offset || 0, y: xyz[1].offset || 0, z: xyz[2].offset || 0},
+			mins: node.bounds.slice(0, 3)
 		};
 
 		worker.postMessage(message, [message.buffer]);

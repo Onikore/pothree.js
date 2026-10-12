@@ -953,5 +953,191 @@
 		],
 		"errors": [],
 		"browser": "chromium"
+	},
+	"copc": {
+		"view": {
+			"position": [
+				-0.7834107756028024,
+				1.7779107756028028,
+				1.8144244108044165
+			],
+			"target": [
+				-2.886999999999999,
+				3.8814999999999995,
+				-1.1604999999999994
+			]
+		},
+		"state": {
+			"loading": 0,
+			"pointclouds": 1,
+			"points": 341989,
+			"nodes": 9
+		},
+		"console": [],
+		"errors": [],
+		"browser": "chromium"
+	},
+	"light": {
+		"view": {
+			"position": [
+				19.474,
+				-14.324,
+				12.829
+			],
+			"target": [
+				0.3389999999999951,
+				0.14499999999999602,
+				4.072999999999999
+			]
+		},
+		"state": {
+			"loading": 0,
+			"pointclouds": 2,
+			"points": 1996920,
+			"nodes": 156
+		},
+		"console": [],
+		"errors": [],
+		"browser": "chromium"
+	},
+	"light_animated": {
+		"view": {
+			"position": [
+				41.557,
+				-27.297,
+				26.594
+			],
+			"target": [
+				0.18300000000000693,
+				-0.257000000000005,
+				3.687000000000001
+			]
+		},
+		"state": {
+			"loading": 0,
+			"pointclouds": 2,
+			"points": 1975305,
+			"nodes": 157
+		},
+		"console": [],
+		"errors": [],
+		"browser": "chromium"
+	},
+	"light_ca13": {
+		"view": {
+			"position": [
+				695235.543,
+				3914545.349,
+				1135.256
+			],
+			"target": [
+				695234.024,
+				3916032.892,
+				178.64800000000014
+			]
+		},
+		"state": {
+			"loading": 0,
+			"pointclouds": 1,
+			"points": 2999747,
+			"nodes": 178
+		},
+		"console": [],
+		"errors": [],
+		"browser": "chromium"
+	},
+	"potree2": {
+		"view": {
+			"position": [
+				2.780854420514536,
+				-1.041854420514535,
+				6.360174593861187
+			],
+			"target": [
+				-2.1424999999999983,
+				3.881499999999999,
+				-0.6024999999999983
+			]
+		},
+		"state": {
+			"loading": 0,
+			"pointclouds": 1,
+			"points": 341989,
+			"nodes": 117
+		},
+		"console": [],
+		"errors": [],
+		"browser": "chromium"
+	},
+	"potree2_brotli": {
+		"view": {
+			"position": [
+				2.780854420514536,
+				-1.041854420514535,
+				6.360174593861187
+			],
+			"target": [
+				-2.1424999999999983,
+				3.881499999999999,
+				-0.6024999999999983
+			]
+		},
+		"state": {
+			"loading": 0,
+			"pointclouds": 1,
+			"points": 341989,
+			"nodes": 117
+		},
+		"console": [],
+		"errors": [],
+		"browser": "chromium"
+	},
+	"ept_binary": {
+		"view": {
+			"position": [
+				0.7500000000000009,
+				1.2499999999999996,
+				3.389087296526012
+			],
+			"target": [
+				-1.9999999999999991,
+				3.9999999999999996,
+				-0.49999999999999956
+			]
+		},
+		"state": {
+			"loading": 0,
+			"pointclouds": 1,
+			"points": 341989,
+			"nodes": 16
+		},
+		"console": [],
+		"errors": [],
+		"browser": "chromium",
+		"referenceFrom": "ept"
+	},
+	"ept_zstandard": {
+		"view": {
+			"position": [
+				0.7500000000000009,
+				1.2499999999999996,
+				3.389087296526012
+			],
+			"target": [
+				-1.9999999999999991,
+				3.9999999999999996,
+				-0.49999999999999956
+			]
+		},
+		"state": {
+			"loading": 0,
+			"pointclouds": 1,
+			"points": 341989,
+			"nodes": 16
+		},
+		"console": [],
+		"errors": [],
+		"browser": "chromium",
+		"referenceFrom": "ept"
 	}
 }
