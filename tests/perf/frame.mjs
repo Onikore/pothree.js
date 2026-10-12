@@ -2,7 +2,7 @@
 //
 //   node tests/perf/frame.mjs [example] [seconds]          default: ca13 20
 //   env: BUDGET (default 3M), GL=nvidia (real GPU via Vulkan; default SwiftShader), UNCAPPED=1 (no vsync),
-//        ANNOTATIONS=N (add N annotations)
+//        ANNOTATIONS=N (add N annotations), FREEZE=1 (static camera, frozen node set)
 //
 // Waits until loading settles, then rotates the view by a fixed angle per frame (so LOD selection,
 // node loading and rendering all run), records rAF frame times and a CPU profile (CDP sampling),
@@ -47,10 +47,10 @@ const browser = await pw.chromium.launch({args: glArgs});
 const page = await browser.newPage({viewport: {width: 1280, height: 800}});
 await page.goto(`http://127.0.0.1:${server.address().port}/examples/${name}.html`);
 await page.waitForFunction(() => window.viewer || window.potreeViewer);
-await page.evaluate((budget) => (window.viewer || window.potreeViewer).setPointBudget(budget), budget);
+await page.evaluate((budget) => { const v = window.viewer || window.potreeViewer; v.setPointBudget(budget); if (budget > 10_000_000) v.setMinNodeSize(0); }, budget);
 
 let last = "", since = Date.now();
-for (const start = Date.now(); Date.now() - start < 180_000;) {
+for (const start = Date.now(); Date.now() - start < Number(process.env.LOAD_TIMEOUT ?? 180) * 1000;) {
 	const s = await page.evaluate(() => {
 		const v = window.viewer || window.potreeViewer;
 		return JSON.stringify([Potree.numNodesLoading, v.scene.pointclouds.map(pc => pc.visibleNodes.length)]);
@@ -76,14 +76,17 @@ if (annotations > 0) {
 	}, annotations);
 }
 
-// orbit: rotate the view each frame, record frame intervals
+// orbit: rotate the view each frame, record frame intervals (FREEZE=1: static camera, frozen node set)
+await page.evaluate((freeze) => { window.__freeze = freeze; }, process.env.FREEZE === "1");
 await page.evaluate(() => {
 	const v = window.viewer || window.potreeViewer;
 	window.__frames = [];
 	window.__busy = [];
 	let prev = performance.now(), start = 0;
+	const freeze = window.__freeze;
+	if (freeze) v.setFreeze(true);
 	v.addEventListener("update_start", () => {
-		v.scene.view.yaw += 0.01;
+		if (!freeze) v.scene.view.yaw += 0.01;
 		const now = performance.now();
 		window.__frames.push(now - prev);
 		prev = now;
