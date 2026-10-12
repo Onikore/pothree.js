@@ -98,6 +98,7 @@
 | `profile.js`, `profile.html` | окно профиля высот (d3) |
 | `sidebar.js`, `sidebar.html`, `potree.css` | боковая панель (jQuery UI, jstree, spectrum) |
 | `PropertyPanels/*.js` | панели свойств выбранного объекта (облако, измерения, объёмы, камера, анимация) |
+| `VRButton.js` | кнопка входа в VR; доработанная копия `VRButton` из three (события `onStart`/`onEnd`, асинхронная проверка поддержки). До миграции лежала в `libs/three.js/extra/` |
 | `HierarchicalSlider.js` | слайдер диапазона (фильтр GPS time) |
 | `LoadProject.js`, `SaveProject.js` | проект в JSON (облака, измерения, объёмы, аннотации, вид) |
 

@@ -4,6 +4,8 @@
 |---|---|
 | [architecture.md](architecture.md) | как устроен Potree: слои, путь точки от URL до экрана, LOD, рендер, picking, сборка, найденные проблемы |
 | [modules.md](modules.md) | назначение каждого файла в `src/` |
+| [build.md](build.md) | сборка: gulp, rollup, three.js из npm, import map в примерах |
+| [testing.md](testing.md) | визуальный регресс примеров и smoke-тест форматов |
 | [../MIGRATION_PLAN.md](../MIGRATION_PLAN.md) | миграция на актуальный three.js: аудит, целевая архитектура, план шагов, решения |
 | [RELEASE.MD](RELEASE.MD) | порядок выпуска (из оригинального репозитория) |
 

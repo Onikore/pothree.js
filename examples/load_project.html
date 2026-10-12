@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<script type="importmap">
+	{"imports": {
+		"three": "../node_modules/three/build/three.module.js",
+		"three/examples/jsm/": "../node_modules/three/examples/jsm/"
+	}}
+	</script>
 	<meta charset="utf-8">
 	<meta name="description" content="">
 	<meta name="author" content="">
@@ -37,7 +43,7 @@
 	
 	<script type="module">
 
-	import * as THREE from "../libs/three.js/build/three.module.js";
+	import * as THREE from "three";
 	
 		window.viewer = new Potree.Viewer(document.getElementById("potree_render_area"));
 		

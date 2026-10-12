@@ -22,7 +22,7 @@
  src/loader/*, modules/loader/2.0/*   загрузчики форматов (иерархия + точки узла)
  src/workers/*             декодирование точек в воркерах
         │
- libs/three.js (r124)      вшитая копия three.js
+ three (npm)               three.js из node_modules (до миграции — вшитая копия libs/three.js r124)
 ```
 
 ## Глобальное состояние
@@ -156,7 +156,7 @@ clipping (box, polygon, sphere, plane). Фрагментный — форму т
 
 ## Сборка
 
-`npm run build` = `gulp build pack`:
+Подробно — `docs/build.md`. Кратко, `npm run build` = `gulp build pack`:
 - rollup: `src/Potree.js` → UMD `build/potree/potree.js` (three.js вшит, `treeshake: false`,
   без минификации); воркеры Potree 2.0 → ES-модули;
 - gulp: склейка остальных воркеров (`LASLAZWorker`, `Ept*Worker`), копирование ресурсов, ленивых
@@ -182,3 +182,9 @@ clipping (box, polygon, sphere, plane). Фрагментный — форму т
 | `src/Potree_update_visibility.js` | `p.dem instanceof Potree.DEM` — класса `DEM` в коде нет; упадёт, если включить `generateDEM` |
 | `src/workers/DEMWorker.js`, `shaders/pointcloud_dynamic.*` | нигде не используются |
 | `build/potree/potree.js` | не минифицирован, tree-shaking выключен |
+
+## Изменения в ходе миграции
+
+| Шаг | Что изменилось |
+|---|---|
+| 1 | three.js берётся из npm (`three@0.124.0`, тот же r124), `libs/three.js` удалена; импорты в `src/` и примерах — `"three"`, `"three/examples/jsm/..."`; примеры получили import map. Собственный `VRButton` Potree перенесён в `src/viewer/VRButton.js`. Сборка — rollup 4 (`rollup.config.mjs`), ошибка rollup валит `npm run build`. Подробно — `docs/build.md`. |

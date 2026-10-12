@@ -1,6 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<script type="importmap">
+	{"imports": {
+		"three": "../node_modules/three/build/three.module.js",
+		"three/examples/jsm/": "../node_modules/three/examples/jsm/"
+	}}
+	</script>
 	<meta charset="utf-8">
 	<meta name="description" content="">
 	<meta name="author" content="">
@@ -38,9 +44,9 @@
 	
 	<script type="module">
 
-		import * as THREE from "../libs/three.js/build/three.module.js";
-		import {PLYLoader} from "../libs/three.js/loaders/PLYLoader.js";
-		import {OBJLoader} from "../libs/three.js/loaders/OBJLoader.js";
+		import * as THREE from "three";
+		import {PLYLoader} from "three/examples/jsm/loaders/PLYLoader.js";
+		import {OBJLoader} from "three/examples/jsm/loaders/OBJLoader.js";
 	
 		window.viewer = new Potree.Viewer(document.getElementById("potree_render_area"));
 		

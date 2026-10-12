@@ -279,7 +279,7 @@ r163. Делаем его на r152: там ещё есть WebGL1, поэтом
 
 | # | Шаг | three | Сложность |
 |---|---|---|---|
-| 1 | Инфраструктура (Этап 1): ветка `three-upgrade`, Playwright‑регресс, smoke форматов, three из npm (`three@0.124.0`, нулевой diff), rollup v4 с `three` как `external`, import map в примерах — одна копия three | r124 | M |
+| 1 | Инфраструктура (Этап 1): ветка `three-upgrade`, Playwright‑регресс, smoke форматов, three из npm (`three@0.124.0`, нулевой diff), rollup v4, import map в примерах. Единая копия three на странице (ES‑сборка с `three` как `external`) перенесена в 7а: UMD без вшитой three невозможен, т.к. в r160+ нет UMD‑сборки three | r124 | M |
 | 2 | Подготовка на r124: `THREE.Math`→`MathUtils`, `RGBFormat`→`RGBAFormat`, `Geometry`/`Face3`→`BufferGeometry`; исправление найденных ошибок (двойная загрузка Potree 2.0, `.vpc`, `exports.*`/`Potree.*` в ядре) и лишних аллокаций в `updateVisibility` | r124 | M |
 | 3 | Прыжки r125→r137→r151: `PlaneBufferGeometry`, addons (`Line2`, `LineMaterial`, `XRControllerModelFactory`) из `three/addons` | r151 | M |
 | 4 | r151→r152: color management закрепить на поведении r124 (решение D), сверить пиксели | r152 | M |

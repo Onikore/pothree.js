@@ -177,10 +177,14 @@ gulp.task('build',
 	)
 );
 
-gulp.task("pack", async function(){
-	exec('rollup -c', function (err, stdout, stderr) {
-		console.log(stdout);
-		console.log(stderr);
+// Fails the build when rollup fails (the original version only logged the error).
+gulp.task("pack", function(){
+	return new Promise((resolve, reject) => {
+		exec('rollup -c', function (err, stdout, stderr) {
+			console.log(stdout);
+			console.log(stderr);
+			err ? reject(err) : resolve();
+		});
 	});
 });
 
