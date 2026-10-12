@@ -2,6 +2,7 @@
 import * as THREE from "three";
 import {ClipTask, ClipMethod, CameraMode, LengthUnits, ElevationGradientRepeat} from "../defines.js";
 import {Renderer} from "../PotreeRenderer.js";
+import {createPointCloudRenderer} from "../rendering/PointCloudRenderer.js";
 import {PotreeRenderer} from "./PotreeRenderer.js";
 import {EDLRenderer} from "./EDLRenderer.js";
 import {HQSplatRenderer} from "./HQSplatRenderer.js";
@@ -212,7 +213,7 @@ export class Viewer extends EventDispatcher{
 			);
 		}
 		
-		this.pRenderer = new Renderer(this.renderer);
+		this.pRenderer = createPointCloudRenderer(this.renderer, Renderer);
 		
 		{
 			let near = 2.5;

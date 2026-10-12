@@ -8,6 +8,7 @@ import {LASExporter} from "../exporter/LASExporter.js";
 import { EventDispatcher } from "../EventDispatcher.js";
 import {PointCloudTree} from "../PointCloudTree.js";
 import {Renderer} from "../PotreeRenderer.js";
+import {createPointCloudRenderer} from "../rendering/PointCloudRenderer.js";
 import {PointCloudMaterial} from "../materials/PointCloudMaterial.js";
 import {PointSizeType} from "../defines.js";
 
@@ -282,7 +283,7 @@ export class ProfileWindow extends EventDispatcher {
 		this.initSVG();
 		this.initListeners();
 
-		this.pRenderer = new Renderer(this.renderer);
+		this.pRenderer = createPointCloudRenderer(this.renderer, Renderer);
 
 		this.elRoot.i18n();
 	}

@@ -60,6 +60,11 @@
 
 ### Добавлено
 
+- Облака точек рисует three.js (`Potree.PointCloudRenderer`, `src/rendering/PointCloudRenderer.js`):
+  `THREE.Points` + `RawShaderMaterial`, без собственного WebGL-рендерера и приватного API three.
+  Картинка совпадает с оригиналом попиксельно. Временно можно вернуть старый рендерер:
+  `Potree.pointCloudRenderer = "legacy"` до создания вьюера.
+
 - Визуальный регресс всех примеров и smoke-тест форматов: `node tests/visual/run.mjs`
   (`docs/testing.md`), эталонные скриншоты исходного кода в `tests/visual/baseline/`.
 - Примеры `potree2.html` и `potree2_brotli.html` с локальными данными Potree 2.0

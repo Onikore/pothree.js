@@ -7,6 +7,7 @@
 //   node tests/visual/run.mjs --update              record baseline (run on the reference code)
 //   node tests/visual/run.mjs                       compare against baseline, exit 1 on failure
 //   options: --only a,b  --browser chromium|firefox|webkit  --group formats  --jobs N (default 4)
+//            --legacy-renderer (old raw-WebGL point cloud renderer, while both exist)
 //
 // Baseline: tests/visual/baseline/<name>.png + baseline.json (camera, visible points, console).
 // Results:  tests/visual/output/<name>.png, <name>.diff.png, report.json.
@@ -31,6 +32,7 @@ const arg = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1
 const update = args.includes("--update");
 const browserName = arg("--browser") ?? "chromium";
 const jobs = Number(arg("--jobs") ?? 4);
+const legacyRenderer = args.includes("--legacy-renderer"); // old raw-WebGL point renderer, for comparison
 const only = arg("--only")?.split(",") ?? (arg("--group") ? config.groups[arg("--group")] : null);
 
 const VIEWPORT = {width: 1280, height: 800};
@@ -140,6 +142,10 @@ async function runExample(browser, baseUrl, name, baseline) {
 	if (cfg.skip) return {...result, status: "skipped", reason: cfg.skip};
 
 	const context = await browser.newContext({viewport: VIEWPORT, deviceScaleFactor: 1});
+	if (legacyRenderer) {
+		// read by createPointCloudRenderer (src/rendering/PointCloudRenderer.js)
+		await context.addInitScript(() => { globalThis.POTREE_POINT_CLOUD_RENDERER = "legacy"; });
+	}
 	const page = await context.newPage();
 	page.on("console", m => { if (m.type() === "error" || m.type() === "warning") result.console.push(`${m.type()}: ${m.text()}`); });
 	page.on("pageerror", e => result.errors.push(String(e)));

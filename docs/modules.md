@@ -15,7 +15,8 @@
 | `PointCloudOctree.js` | 1153 | облако в сцене: узлы (`toTreeNode`), текстура видимых узлов, picking (`pick`), профиль, `getPointsInBox`, bbox, `find` |
 | `PointCloudOctreeGeometry.js` | 269 | геометрия Potree 1.x: узел, URL узла, загрузка иерархии и точек |
 | `PointCloudEptGeometry.js` | 319 | геометрия EPT: ключи узлов, иерархия EPT |
-| `PotreeRenderer.js` | 1483 | **WebGL**. Собственный рендерер облаков: шейдеры, VBO/VAO, uniforms, текстуры, `drawArrays` |
+| `rendering/PointCloudRenderer.js` | — | отрисовка облаков средствами three.js (замена `PotreeRenderer.js`), `createPointCloudRenderer` — временный переключатель на старый; см. `docs/rendering.md` |
+| `PotreeRenderer.js` | 1483 | **WebGL**, старый рендерер (будет удалён после паритета). Собственный рендерер облаков: шейдеры, VBO/VAO, uniforms, текстуры, `drawArrays` |
 | `ProfileRequest.js` | 392 | `ProfileData`, `ProfileRequest` — асинхронный сбор точек вдоль полосы профиля |
 | `LRU.js` | 173 | LRU узлов; `freeMemory()` выгружает узлы сверх `pointLoadLimit` |
 | `WorkerPool.js` | 27 | пул воркеров по URL скрипта |

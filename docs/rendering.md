@@ -1,8 +1,11 @@
 # Отрисовка облаков точек
 
 Документ описывает, **что делает** собственный WebGL-рендерер Potree (`src/PotreeRenderer.js`, класс
-`Renderer`) и **как каждая его часть переносится** на штатные средства three.js (шаг 5 миграции,
-`MIGRATION_PLAN.md` раздел 6.1). Пока шаг 5 не сделан, работает старый рендерер.
+`Renderer`) и **как каждая его часть перенесена** на штатные средства three.js
+(`src/rendering/PointCloudRenderer.js`, шаг 5 миграции, `MIGRATION_PLAN.md` раздел 6.1).
+
+Сейчас по умолчанию работает новый рендерер. Старый оставлен для сравнения до проверки паритета:
+`Potree.pointCloudRenderer = "legacy"` до создания `Potree.Viewer`.
 
 ## Как вызывается
 
@@ -47,7 +50,7 @@
    `minSize`, `maxSize`, `uOctreeSpacing`, `uOctreeSize`, `uColor`, `uOpacity`, `elevationRange`,
    `intensityRange`, гамма/яркость/контраст интенсивности и RGB, `uTransition`, веса
    (`wRGB`, `wIntensity`, `wElevation`, `wClassification`, `wReturnNumber`, `wSourceID`),
-   `backfaceCulling`; текстуры `visibleNodesTexture`, `gradient` (режим повтора — из
+   `backfaceCulling`; текстуры `visibleNodesTexture` (**в шейдере сэмплер называется `visibleNodes`** — старый рендерер ставил несуществующий uniform, а работало потому, что текстура оказывалась в блоке 0, куда смотрит сэмплер без значения), `gradient` (режим повтора — из
    `elevationGradientRepeat`), `classificationLUT`, `matcapTextureUniform`; снимки
    (`uSnapshot`, `uSnapshotDepth`, `uSnapView/Proj/ProjInv/ViewInv`) — текстуры через приватное
    `threeRenderer.properties.get(tex).__webglTexture`.
@@ -88,3 +91,18 @@
 на картинку не влияет (тест глубины), а `uPCIndex` для picking берётся не из порядка рисования, а
 из индекса узла в `visibleNodes`, записанного при выборе узлов (без `indexOf` на каждый узел).
 Для прозрачных облаков (аддитивное смешивание) порядок тоже не важен — сумма коммутативна.
+
+## Новый рендерер: устройство (`src/rendering/PointCloudRenderer.js`)
+
+| Часть | Что делает |
+|---|---|
+| `render(scene, camera, target, params)` | как раньше: находит облака под `scene`, для каждого `renderOctree` с `octree.visibleNodes` |
+| `renderOctree(octree, nodes, camera, target, params)` | текстура видимости → внутренний материал → шейдер → смешивание/глубина → uniforms облака; затем видимыми остаются ровно `nodes`, у них временно подменяются `material` и `onBeforeRender`, и `renderer.render(octree, camera)` рисует их средствами three; после — всё восстанавливается |
+| внутренний материал | на каждый `PointCloudMaterial` свой `RawShaderMaterial` (`WeakMap`). В нём **только** uniforms, которые выставлял старый рендерер: остальные uniforms шейдера остаются нулями, как было |
+| `updateShader` | исходник материала + `#define` рендера; при изменении — `needsUpdate`, three берёт программу из своего кэша или компилирует |
+| `updateBlending` | непрозрачно: без смешивания, тест и запись глубины; `opacity < 1`: `SRC_ALPHA, ONE`, без глубины; `params` переопределяют |
+| `onBeforeRenderNode` | uniforms узла (`uLevel`, `uVNStart`, `uPCIndex`, `uNodeSpacing`, `uDebug`, clip-полигоны, тени, GPS time), псевдонимы атрибутов, `uniformsNeedUpdate` |
+| `updateAttributeAliases` | один раз на геометрию: `rgba`→`color`, `return number`→`returnNumber` и т.д. (тот же `BufferAttribute`); `aExtra` — на активный «дополнительный» атрибут |
+
+Пока шейдеры GLSL ES 1.0 и контекст WebGL1 — как у старого рендерера (подшаг 5a): меняется только
+то, кто рисует. Перевод на WebGL2/GLSL3 — подшаг 5b.
