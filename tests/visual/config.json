@@ -1,16 +1,77 @@
 {
-	"defaults": {"maxDiff": 0.005, "pointclouds": true},
+	"defaults": {
+		"maxDiff": 0.005,
+		"pointclouds": true
+	},
 	"examples": {
-		"page": {"pointclouds": false},
-		"github": {"pointclouds": false},
-		"cesium_ca13": {"maxDiff": 0.05, "note": "Cesium map tiles come from the network"},
-		"cesium_retz": {"maxDiff": 0.05, "note": "Cesium map tiles come from the network"},
-		"cesium_sorvilier": {"maxDiff": 0.05, "note": "Cesium map tiles come from the network"},
-		"annotation_hierarchy": {"maxDiff": 0.05, "note": "Cesium map tiles come from the network"},
-		"light_animated": {"maxDiff": 0.05, "note": "animated scene"},
-		"camera_animation": {"maxDiff": 0.05, "note": "animated scene"}
+		"page": {
+			"pointclouds": false
+		},
+		"github": {
+			"pointclouds": false
+		},
+		"cesium_ca13": {
+			"maxDiff": 0.05,
+			"note": "Cesium map tiles come from the network"
+		},
+		"cesium_retz": {
+			"maxDiff": 0.05,
+			"note": "Cesium map tiles come from the network"
+		},
+		"cesium_sorvilier": {
+			"maxDiff": 0.05,
+			"note": "Cesium map tiles come from the network"
+		},
+		"annotation_hierarchy": {
+			"maxDiff": 0.05,
+			"note": "Cesium map tiles come from the network"
+		},
+		"light_animated": {
+			"maxDiff": 0.1,
+			"animated": true,
+			"note": "animated scene: only checks that it loads and renders"
+		},
+		"camera_animation": {
+			"maxDiff": 0.1,
+			"animated": true,
+			"note": "animated scene: only checks that it loads and renders"
+		},
+		"light_ca13": {
+			"maxDiff": 0.1,
+			"animated": true,
+			"note": "animated scene: only checks that it loads and renders"
+		},
+		"vr_dechen_cave": {
+			"skip": "data on potree.org is blocked by CORS outside potree.org; Potree 2.0 is covered by potree2*.html"
+		},
+		"vr_eclepens": {
+			"skip": "data on potree.org is blocked by CORS outside potree.org; Potree 2.0 is covered by potree2*.html"
+		},
+		"vr_heidentor": {
+			"skip": "data on potree.org is blocked by CORS outside potree.org; Potree 2.0 is covered by potree2*.html"
+		},
+		"vr_lion": {
+			"skip": "data on potree.org is blocked by CORS outside potree.org; Potree 2.0 is covered by potree2*.html"
+		},
+		"vr_morro_bay": {
+			"skip": "data on potree.org is blocked by CORS outside potree.org; Potree 2.0 is covered by potree2*.html"
+		},
+		"arena4d": {
+			"skip": "Arena4D test server answers 503"
+		}
 	},
 	"groups": {
-		"formats": ["lion", "lion_las", "lion_laz", "ept", "ept_binary", "ept_laz_14", "ept_zstandard", "copc", "vr_lion"]
+		"formats": [
+			"lion",
+			"lion_las",
+			"lion_laz",
+			"ept",
+			"ept_binary",
+			"ept_laz_14",
+			"ept_zstandard",
+			"copc",
+			"potree2",
+			"potree2_brotli"
+		]
 	}
 }

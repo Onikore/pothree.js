@@ -32,6 +32,9 @@
   `PointCloudArena4D`, `PointCloudArena4DGeometry` и их узлы теперь экспортируются из `Potree`.
   Проверить работу нельзя: сервер тестовых данных Arena4D недоступен.
 - `npm run build` не завершался ошибкой, когда падал rollup.
+- Примеры `ept_binary` и `ept_zstandard` не загружали облако: загрузчик EPT берёт `window.Copc` для
+  всех типов EPT, а эти страницы не подключали `libs/copc/index.js`. **Свои страницы с EPT должны
+  подключать `libs/copc/index.js`**.
 
 ### Изменено
 
@@ -45,6 +48,9 @@
 
 - Визуальный регресс всех примеров и smoke-тест форматов: `node tests/visual/run.mjs`
   (`docs/testing.md`), эталонные скриншоты исходного кода в `tests/visual/baseline/`.
+- Примеры `potree2.html` и `potree2_brotli.html` с локальными данными Potree 2.0
+  (`pointclouds/lion_takanawa_potree2*`). Примеры `vr_*` грузят Potree 2.0 с potree.org и работают
+  только на нём (CORS).
 - Документация кода в `docs/`: устройство (`architecture.md`), карта файлов (`modules.md`),
   сборка (`build.md`), тесты (`testing.md`).
 

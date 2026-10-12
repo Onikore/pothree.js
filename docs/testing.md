@@ -58,7 +58,7 @@ Chromium запускается с программным WebGL (SwiftShader: `-
 | Путь | Что |
 |---|---|
 | `tests/visual/run.mjs` | скрипт |
-| `tests/visual/config.json` | допуски по примерам (`maxDiff`), `pointclouds: false` для страниц без облака, `skip`, группы |
+| `tests/visual/config.json` | допуски по примерам (`maxDiff`), `pointclouds: false` для страниц без облака, `animated`, `skip` с причиной, группы |
 | `tests/visual/baseline/<пример>.png` | эталонные скриншоты (сняты на исходном коде, three r124) |
 | `tests/visual/baseline/baseline.json` | камера, число точек, консоль эталона |
 | `tests/visual/output/` | результаты последнего прогона: скриншоты, `*.diff.png` (красное — отличия), `report.json`; не коммитится |
@@ -80,6 +80,19 @@ Chromium запускается с программным WebGL (SwiftShader: `-
 | `lion_laz` | Potree 1.x, узлы LAZ | `pointclouds/lion_takanawa_laz` |
 | `ept`, `ept_binary`, `ept_laz_14`, `ept_zstandard` | EPT: laszip, binary, LAZ 1.4, zstandard | `pointclouds/lion_takanawa_ept_*` |
 | `copc` | COPC | `pointclouds/lion_takanawa.copc.laz` |
-| `vr_lion` | Potree 2.0 | **удалённые** данные `potree.org/pointclouds/lion/metadata.json` |
+| `potree2` | Potree 2.0, без сжатия | `pointclouds/lion_takanawa_potree2` |
+| `potree2_brotli` | Potree 2.0, Brotli | `pointclouds/lion_takanawa_potree2_brotli` |
 
-Локальных данных Potree 2.0 в репозитории нет, поэтому этот формат проверяется по сети.
+Данные Potree 2.0 сделаны из `lion_takanawa.copc.laz` конвертером PotreeConverter 2.1.1 (команды —
+`pointclouds/lion_takanawa_potree2/README.md`). Примеры `vr_*` тоже грузят Potree 2.0, но с
+potree.org, который запрещает чужим сайтам загрузку (CORS), поэтому они пропускаются.
+
+COPC читает файл кусками (HTTP `Range`), поэтому тестовый сервер поддерживает `Range`.
+
+## Пропущенные и особые примеры
+
+| Пример | Почему |
+|---|---|
+| `vr_*` | данные на potree.org закрыты CORS — работают только на самом potree.org |
+| `arena4d` | сервер тестовых данных Arena4D отвечает 503 |
+| `light_animated`, `light_ca13`, `camera_animation` | анимация никогда не останавливается: режим `animated` — ждём только окончания загрузки, допуск 10%; ловим падения и пустой кадр |

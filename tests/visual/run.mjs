@@ -38,7 +38,8 @@ const SETTLE_MS = 2000;     // loading must stay idle this long
 const SETTLE_FRAMES = 30;   // ...and for this many rendered frames
 const TIMEOUT_MS = 180_000; // per example
 
-// ponytail: minimal static server, enough for examples (no ranges, no caching)
+// ponytail: minimal static server, enough for examples (single byte ranges, no caching).
+// Range requests are needed by COPC, which reads parts of the .laz file.
 const MIME = {".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css",
 	".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml",
 	".wasm": "application/wasm"};
@@ -48,7 +49,15 @@ function serve() {
 		if (!file.startsWith(root)) { res.writeHead(403).end(); return; }
 		fs.readFile(file, (err, data) => {
 			if (err) { res.writeHead(404).end(); return; }
-			res.writeHead(200, {"Content-Type": MIME[path.extname(file)] ?? "application/octet-stream"}).end(data);
+			const type = MIME[path.extname(file)] ?? "application/octet-stream";
+			const range = /^bytes=(\d+)-(\d*)$/.exec(req.headers.range ?? "");
+			if (range) {
+				const start = Number(range[1]), end = range[2] ? Math.min(Number(range[2]), data.length - 1) : data.length - 1;
+				res.writeHead(206, {"Content-Type": type, "Content-Range": `bytes ${start}-${end}/${data.length}`, "Accept-Ranges": "bytes"})
+					.end(data.subarray(start, end + 1));
+				return;
+			}
+			res.writeHead(200, {"Content-Type": type, "Accept-Ranges": "bytes"}).end(data);
 		});
 	});
 	return new Promise(resolve => server.listen(0, "127.0.0.1", () => resolve(server)));
@@ -80,12 +89,14 @@ const STATE = `(() => {
 })()`;
 
 // Settled = nothing loading and loading state unchanged for SETTLE_MS and SETTLE_FRAMES frames.
-async function waitSettled(page, expectPointclouds) {
+// animated: the scene never stops changing (moving lights, camera paths), so only wait for loading
+// to finish; such examples get a large maxDiff in config.json and mainly catch crashes/empty frames.
+async function waitSettled(page, expectPointclouds, animated = false) {
 	const start = Date.now();
 	let last = null, stableSince = Date.now(), stableFrame = 0;
 	while (Date.now() - start < TIMEOUT_MS) {
 		const s = await page.evaluate(STATE).catch(() => null);
-		const key = s && JSON.stringify({...s, frame: undefined});
+		const key = s && JSON.stringify(animated ? {loading: s.loading, pointclouds: s.pointclouds} : {...s, frame: undefined});
 		if (key !== last) { last = key; stableSince = Date.now(); stableFrame = s?.frame ?? 0; }
 		const ready = s ? (s.loading === 0 && (!expectPointclouds || s.pointclouds > 0)) : !expectPointclouds;
 		const frames = s ? s.frame - stableFrame : SETTLE_FRAMES;
@@ -134,11 +145,11 @@ async function runExample(browser, baseUrl, name, baseline) {
 	page.on("pageerror", e => result.errors.push(String(e)));
 	try {
 		await page.goto(`${baseUrl}/examples/${name}.html`, {waitUntil: "load", timeout: TIMEOUT_MS});
-		let state = await waitSettled(page, cfg.pointclouds);
+		let state = await waitSettled(page, cfg.pointclouds, cfg.animated);
 		const view = update ? await getView(page) : baseline?.view;
 		if (view && !update) {
 			await setView(page, view);
-			state = await waitSettled(page, cfg.pointclouds);
+			state = await waitSettled(page, cfg.pointclouds, cfg.animated);
 		}
 		const png = await page.screenshot();
 		Object.assign(result, {state, view});
