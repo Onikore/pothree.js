@@ -35,13 +35,23 @@
   `EXT_color_buffer_float`. Собственный WebGL-рендерер облаков `Potree.Renderer` удалён, вместо него
   `Potree.PointCloudRenderer` с тем же `render()`/`renderOctree()`.
 
+### Удалено
+
+- **VR/WebXR** (см. выше), **Arena4D** (`.vpc`, `Potree.PointCloudArena4D*`; сервер тестовых данных
+  недоступен), **`Potree.DeviceOrientationControls`** (управление гироскопом), **интеграция Cesium**
+  (примеры `cesium_*.html`, `annotation_hierarchy.html` и `libs/Cesium`, 13 МБ).
+- Неиспользуемый код: `GeoControls`, `DEMWorker`, `InterleavedBuffer`, `BitReader`, `BlurMaterial`,
+  шейдеры `pointcloud_dynamic.*`, `pointcloud_sm.*`, `blur.*`, `src/server/getPoints.php`, `libs/MeshLine`.
+
 ### Исправлено
+
+- Выбор точки мышью (picking) у краёв экрана (ближе ~32 px): у двух краёв точка не выбиралась
+  (окно чтения обрезалось, а читалось полное), у двух других выбиралась точка ближайшая не к курсору,
+  а к середине сдвинутого окна (на ~12 px дальше). Теперь читается видимая часть окна и расстояние
+  считается до курсора. В остальной части экрана результат прежний (проверено тестом).
 
 - Облако Potree 2.0 (`metadata.json`) загружалось дважды: метаданные и иерархия скачивались повторно,
   а результат второй загрузки выбрасывался.
-- Загрузка Arena4D (`.vpc`) падала с `ReferenceError`: загрузчик не был импортирован. Классы
-  `PointCloudArena4D`, `PointCloudArena4DGeometry` и их узлы теперь экспортируются из `Potree`.
-  Проверить работу нельзя: сервер тестовых данных Arena4D недоступен.
 - `npm run build` не завершался ошибкой, когда падал rollup.
 - В новых three.js методы вроде `Box3.getCenter()`, `Object3D.getWorldDirection()`,
   `getWorldQuaternion()`, `Ray.intersectBox()` требуют вектор-приёмник; без него они падали

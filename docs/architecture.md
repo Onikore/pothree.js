@@ -56,7 +56,6 @@
 | `metadata.json` | `OctreeLoader` (`modules/loader/2.0`) → `OctreeGeometry` | Potree 2.0 (один `octree.bin` + `hierarchy.bin`, опционально Brotli) |
 | `ept.json` | `EptLoader` → `PointCloudEptGeometry` | Entwine Point Tile (binary, laszip, zstandard) |
 | `.copc.laz` | `CopcLoader` | Cloud Optimized Point Cloud |
-| `.vpc` | `PointCloudArena4DGeometry` | Arena4D (kd-дерево) |
 
 Загрузчик читает только метаданные и корень иерархии. Результат — **геометрия облака**
 (дерево `*GeometryNode` с bbox, числом точек и уровнем), из неё создаётся
@@ -180,7 +179,7 @@ clipping (box, polygon, sphere, plane). Фрагментный — форму т
 | `src/Potree_update_visibility.js` | `camera.clone()` каждый кадр на каждое облако, результат не используется | **исправлено в шаге 2** |
 | `src/Potree_update_visibility.js` | отсев по clip box создаёт ~20 объектов three на каждый узел × каждый box каждый кадр | **исправлено в шаге 2**: фрустум clip box считается раз за кадр на пару (облако, box) — `computeClipBoxFrustum` |
 | `src/Potree_update_visibility.js` | `p.dem instanceof Potree.DEM` — класса `DEM` в коде нет; упадёт, если включить `generateDEM` | открыто |
-| `src/workers/DEMWorker.js`, `shaders/pointcloud_dynamic.*` | нигде не используются | открыто (удаление — по согласованию) |
+| `src/workers/DEMWorker.js`, `shaders/pointcloud_dynamic.*` | нигде не используются | **удалено** (решение K) |
 | `build/potree/potree.js` | не минифицирован, tree-shaking выключен | шаг 7а |
 | `src/utils/Profile.js` | линия профиля задавала цвета вершин через `THREE.VertexColors`, которого в r124 уже нет (`undefined`) — цвета не применялись | оставлено как было (линия цвета по умолчанию), комментарий в коде |
 | `src/loader/ept/BinaryLoader.js` (и `ZstandardLoader`) | `node.url()`, `node.ept`, `node.key.b` — API узлов EPT до COPC (f7ac011b, 2023); EPT binary/zstandard не грузились | **исправлено**: URL, схема, масштаб и смещение — из `node.owner`, `node.key`, `node.bounds` |
@@ -195,3 +194,4 @@ clipping (box, polygon, sphere, plane). Фрагментный — форму т
 | 3 | three r124 → r138 → r151 (`three@0.151.3`). r137 пропущена как точка остановки: её `package.json` (`exports`) дописывает `.js` к путям аддонов, r138 содержит все изменения r137. Правки: `renderer.render(scene, camera, target)` → `setRenderTarget` + `render` (`Utils.screenPass`); `raycaster.intersectObjects(..., false)` явно (в r133 по умолчанию стало рекурсивно); `Euler.toVector3()` удалён; `CubeGeometry` → `BoxGeometry`; `PlaneBufferGeometry` → `PlaneGeometry`; тип `DepthTexture` в `PointCloudSM` задан явно (`UnsignedShortType`, как в r124); `THREE.PointCloud` → `new THREE.Points`; убраны ссылки на удалённые константы (`VertexColors`, `RGBFormat`, `UnsignedShort565Type`), в `paramThreeToGL` — защита от `undefined`. |
 | — | VR/WebXR удалён по решению владельца форка: `VRControls`, `VRButton`, `Viewer.renderVR()`, `viewer.vrControls`, `viewer.sceneVR`, `scene.cameraVR`, `CameraMode.VR`, события `vr_start`/`vr_end`. Примеры `vr_*` остались обычными страницами с данными Potree 2.0 с potree.org. |
 | 4 | three r151 → r152. Управление цветом выключено так, чтобы картинка совпадала с r124: `src/threeSetup.js` (импортируется первым в `src/Potree.js`) ставит `ColorManagement.enabled = false`; у рендереров вьюера и окна профиля `outputColorSpace = LinearSRGBColorSpace`; в примерах после импорта three — та же строка для их копии three. |
+| — | Удалены по решению K: Arena4D, `DeviceOrientationControls`, `GeoControls`, мёртвый код, интеграция Cesium. |

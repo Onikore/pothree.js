@@ -1,10 +1,11 @@
-// CPU-side cost of drawing the point clouds: legacy raw-WebGL renderer vs three.js renderer.
+// Cost of drawing the point clouds with the build's own point renderer (viewer.pRenderer).
+// Run it on the original code and on the fork to compare them (PERFORMANCE.md).
 //
 //   node tests/perf/bench.mjs [example] [iterations]      default: ca13 300
 //
-// Opens the example, waits until loading settles, then in the same page and the same frame state
-// calls pRenderer.render(scenePointCloud, camera) `iterations` times for each renderer, alternating
-// in blocks, and reports per-call times. gl.finish() after each call makes the GPU work part of the
+// Opens the example (point budget BUDGET, default 3M; min node size 0 = many nodes), waits until
+// loading settles, freezes the node set and calls pRenderer.render(scenePointCloud, camera)
+// `iterations` times, reporting per-call times. gl.finish() after each call makes the GPU work part of the
 // measurement as well; under SwiftShader (software GL, used for determinism) absolute numbers are
 // CPU raster times, so compare the two renderers with each other, not with real hardware.
 // Results and method: PERFORMANCE.md.
@@ -19,11 +20,14 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..")
 const name = process.argv[2] ?? "ca13";
 const iterations = Number(process.argv[3] ?? 300);
 
+const MIME = {".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css",
+	".json": "application/json", ".png": "image/png", ".jpg": "image/jpeg", ".svg": "image/svg+xml", ".wasm": "application/wasm"};
+
 const server = http.createServer((req, res) => {
 	const file = path.join(root, decodeURIComponent(new URL(req.url, "http://x").pathname));
 	fs.readFile(file, (err, data) => {
 		if (err) { res.writeHead(404).end(); return; }
-		const type = file.endsWith(".js") ? "text/javascript" : file.endsWith(".html") ? "text/html" : file.endsWith(".wasm") ? "application/wasm" : "application/octet-stream";
+		const type = MIME[path.extname(file)] ?? "application/octet-stream"; // text/css matters: without it the layout breaks
 		res.writeHead(200, {"Content-Type": type}).end(data);
 	});
 });
@@ -57,33 +61,28 @@ const result = await page.evaluate((iterations) => {
 	v.setFreeze?.(true); // keep the node set fixed while measuring
 	const r = v.renderer, gl = r.getContext();
 	const camera = v.scene.getActiveCamera();
-	const renderers = {legacy: new Potree.Renderer(r), three: new Potree.PointCloudRenderer(r)};
-	// cpu: time of the render() calls themselves (JS + three.js + GL command submission) - the cost
-	// three.js adds per node shows up here. total: until the GPU (here SwiftShader) has finished.
-	// Timed per block of 10 calls (browser timers are coarse, ~0.1 ms) and divided by 10.
-	const times = {legacy: {cpu: [], total: []}, three: {cpu: [], total: []}};
+	const pointRenderer = v.pRenderer; // the build's own point cloud renderer (original: Renderer, fork: PointCloudRenderer)
 
-	const block = (key) => {
+	// cpu: time of the render() calls themselves (JS + three.js + GL command submission) - this is
+	// where per-node overhead shows. total: until the GPU (here SwiftShader) has finished.
+	// Timed per block of 10 calls (browser timers are coarse, ~0.1 ms) and divided by 10.
+	const times = {cpu: [], total: []};
+	const block = () => {
 		gl.finish();
 		const t0 = performance.now();
 		for (let i = 0; i < 10; i++) {
-			renderers[key].render(v.scene.scenePointCloud, camera, null, {});
+			pointRenderer.render(v.scene.scenePointCloud, camera, null, {});
 		}
 		const t1 = performance.now();
 		gl.finish();
 		const t2 = performance.now();
-		times[key].cpu.push((t1 - t0) / 10);
-		times[key].total.push((t2 - t0) / 10);
+		times.cpu.push((t1 - t0) / 10);
+		times.total.push((t2 - t0) / 10);
 	};
 
-	for (let k of ["legacy", "three"]) for (let i = 0; i < 3; i++) block(k); // warm up, compile
-	for (let k of ["legacy", "three"]) { times[k].cpu.length = 0; times[k].total.length = 0; }
-
-	for (let b = 0; b < iterations / 10; b++) {
-		for (let k of (b % 2 ? ["legacy", "three"] : ["three", "legacy"])) {
-			block(k);
-		}
-	}
+	for (let i = 0; i < 3; i++) block(); // warm up, compile
+	times.cpu.length = 0; times.total.length = 0;
+	for (let b = 0; b < iterations / 10; b++) block();
 
 	const stats = (a) => {
 		a = [...a].sort((x, y) => x - y);
@@ -92,15 +91,18 @@ const result = await page.evaluate((iterations) => {
 	};
 	const pcs = v.scene.pointclouds;
 	return {
+		renderer: pointRenderer.constructor.name,
+		three: (window.__THREE__ || null),
+		canvas: [r.domElement.width, r.domElement.height],
 		nodes: pcs.reduce((s, pc) => s + pc.visibleNodes.length, 0),
 		points: pcs.reduce((s, pc) => s + pc.numVisiblePoints, 0),
-		cpu: {legacy: stats(times.legacy.cpu), three: stats(times.three.cpu)},
-		total: {legacy: stats(times.legacy.total), three: stats(times.three.total)},
+		jsHeapMB: performance.memory ? +(performance.memory.usedJSHeapSize / 1e6).toFixed(1) : null,
+		cpu: stats(times.cpu),
+		total: stats(times.total),
 	};
 }, iterations);
 
-const ratio = (m) => +(result[m].three.median / result[m].legacy.median).toFixed(3);
-console.log(JSON.stringify({example: name, iterations, ...result, threeVsLegacy: {cpu: ratio("cpu"), total: ratio("total")}}, null, 2));
+console.log(JSON.stringify({example: name, iterations, budget, ...result}, null, 2));
 
 await browser.close();
 server.close();

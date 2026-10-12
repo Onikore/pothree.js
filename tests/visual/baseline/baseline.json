@@ -45,29 +45,6 @@
 		"errors": [],
 		"browser": "chromium"
 	},
-	"annotation_hierarchy": {
-		"view": {
-			"position": [
-				675036.45,
-				3850315.78,
-				65076.7
-			],
-			"target": [
-				692869.03,
-				3925774.14,
-				1581.5099999999875
-			]
-		},
-		"state": {
-			"loading": 0,
-			"pointclouds": 1,
-			"points": 508773,
-			"nodes": 68
-		},
-		"console": [],
-		"errors": [],
-		"browser": "chromium"
-	},
 	"annotations": {
 		"view": {
 			"position": [
@@ -127,77 +104,6 @@
 				589800,
 				231432.85249999998,
 				756.2425000000001
-			]
-		},
-		"state": {
-			"loading": 0,
-			"pointclouds": 1,
-			"points": 498868,
-			"nodes": 42
-		},
-		"console": [
-			"error: Failed to load resource: the server responded with a status of 404 (Not Found)"
-		],
-		"errors": [],
-		"browser": "chromium"
-	},
-	"cesium_ca13": {
-		"view": {
-			"position": [
-				689429.64,
-				3877023.77,
-				42878.97
-			],
-			"target": [
-				696072.86,
-				3916730.04,
-				82.04000000000087
-			]
-		},
-		"state": {
-			"loading": 0,
-			"pointclouds": 1,
-			"points": 996497,
-			"nodes": 108
-		},
-		"console": [],
-		"errors": [],
-		"browser": "chromium"
-	},
-	"cesium_retz": {
-		"view": {
-			"position": [
-				570975.577,
-				5398630.521,
-				1659.311
-			],
-			"target": [
-				570115.285,
-				5400866.092,
-				30.009000000000015
-			]
-		},
-		"state": {
-			"loading": 0,
-			"pointclouds": 1,
-			"points": 319309,
-			"nodes": 29
-		},
-		"console": [],
-		"errors": [],
-		"browser": "chromium"
-	},
-	"cesium_sorvilier": {
-		"view": {
-			"position": [
-				590093.649,
-				231823.465,
-				267.402
-			],
-			"target": [
-				589837.149,
-				231438.996,
-				-0.7069999999999936
 			]
 		},
 		"state": {
@@ -278,31 +184,6 @@
 			"pointclouds": 1,
 			"points": 498868,
 			"nodes": 42
-		},
-		"console": [
-			"error: Failed to load resource: the server responded with a status of 404 (Not Found)"
-		],
-		"errors": [],
-		"browser": "chromium"
-	},
-	"deviceorientation": {
-		"view": {
-			"position": [
-				589976,
-				231432,
-				748
-			],
-			"target": [
-				589975.5,
-				231432.5,
-				747.2928932188134
-			]
-		},
-		"state": {
-			"loading": 0,
-			"pointclouds": 1,
-			"points": 241971,
-			"nodes": 19
 		},
 		"console": [
 			"error: Failed to load resource: the server responded with a status of 404 (Not Found)"
@@ -1139,5 +1020,28 @@
 		"errors": [],
 		"browser": "chromium",
 		"referenceFrom": "ept"
+	},
+	"annotation_hierarchy": {
+		"view": {
+			"position": [
+				675036.45,
+				3850315.78,
+				65076.7
+			],
+			"target": [
+				692869.03,
+				3925774.14,
+				1581.5099999999875
+			]
+		},
+		"state": {
+			"loading": 0,
+			"pointclouds": 1,
+			"points": 508773,
+			"nodes": 68
+		},
+		"console": [],
+		"errors": [],
+		"browser": "chromium"
 	}
 }

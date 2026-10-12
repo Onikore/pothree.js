@@ -96,6 +96,8 @@ Copy the converted directory into &lt;potreeDirectory&gt;/pointclouds/data_conve
 
 # Examples
 
+**Pothree:** the Cesium examples (Retz, CA13 with Cesium) and VR demos below link to the original Potree site; Cesium, Arena4D, device orientation and VR are removed from this fork (see CHANGELOG.md).
+
 <table>
 	<tr>
 		<td style="padding: 0px">

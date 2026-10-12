@@ -83,7 +83,7 @@
 | `aExtra` | псевдоним `aExtra` на активный атрибут, переключается при смене `activeAttributeName` |
 | текстуры через `__webglTexture` | обычные uniforms-текстуры three (`texture` render target'а) |
 | состояние смешивания и глубины | свойства материала: `blending`, `blendSrc/Dst`, `depthTest`, `depthWrite`, `transparent` |
-| picking через `renderer.state` | материал picking с нужными свойствами + `readRenderTargetPixelsAsync` |
+| picking через `renderer.state`, `gl.scissor`, `gl.readPixels` | **сделано**: scissor у render target, `setClearColor`/`clear`, `readRenderTargetPixels` (`PointCloudOctree.pick`); глубина и смешивание — из материала picking. Асинхронное чтение (`readRenderTargetPixelsAsync`, r165+) — после подъёма до r186 |
 | `renderer.resetState()` после облаков | не нужен |
 
 Порядок: старый рендерер рисует узлы в порядке `visibleNodes`, three при `sortObjects = false` —
@@ -108,3 +108,10 @@
 `#version 300 es` добавляет three). Перевод механический: `attribute`→`in`, `varying`→`out`/`in`,
 `texture2D`→`texture`, `gl_FragColor`→`out_FragColor`, `gl_FragDepthEXT`→`gl_FragDepth`,
 `#extension GL_EXT_frag_depth` убран.
+
+## Приватный API three.js и сырой WebGL
+
+Не используются. В `src/` остались только `gl.getExtension('EXT_color_buffer_float')` (включение
+расширения) и `gl.getError()` в логе потери контекста. Единственная опора на недокументированное
+поведение three — пропуск uniform с `needsUpdate === false` при заливке (`PointCloudRenderer`,
+uniforms облака заливаются с первым узлом), проверено в r152 и r186.

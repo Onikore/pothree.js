@@ -14,8 +14,6 @@ export * from "./PointCloudEptGeometry.js";
 export * from "./PointCloudOctree.js";
 export * from "./PointCloudOctreeGeometry.js";
 export * from "./PointCloudTree.js";
-export * from "./arena4d/PointCloudArena4D.js";
-export * from "./arena4d/PointCloudArena4DGeometry.js";
 export * from "./Points.js";
 export * from "./Potree_update_visibility.js";
 export * from "./rendering/PointCloudRenderer.js";
@@ -76,7 +74,6 @@ export * from "./modules/loader/2.0/OctreeLoader.js";
 export {OrbitControls} from "./navigation/OrbitControls.js";
 export {FirstPersonControls} from "./navigation/FirstPersonControls.js";
 export {EarthControls} from "./navigation/EarthControls.js";
-export {DeviceOrientationControls} from "./navigation/DeviceOrientationControls.js";
 
 import "./extensions/OrthographicCamera.js";
 import "./extensions/PerspectiveCamera.js";
@@ -87,8 +84,6 @@ import {OctreeLoader} from "./modules/loader/2.0/OctreeLoader.js";
 import {POCLoader} from "./loader/POCLoader.js";
 import {CopcLoader, EptLoader} from "./loader/EptLoader.js";
 import {PointCloudOctree} from "./PointCloudOctree.js";
-import {PointCloudArena4D} from "./arena4d/PointCloudArena4D.js";
-import {PointCloudArena4DGeometry} from "./arena4d/PointCloudArena4DGeometry.js";
 import {WorkerPool} from "./WorkerPool.js";
 
 export const workerPool = new WorkerPool();
@@ -197,17 +192,6 @@ export function loadPointCloud(path, name, callback){
 				}
 			});
 
-		} else if (path.indexOf('.vpc') > 0) {
-			PointCloudArena4DGeometry.load(path, function (geometry) {
-				if (!geometry) {
-					//callback({type: 'loading_failed'});
-					console.error(new Error(`failed to load point cloud from URL: ${path}`));
-				} else {
-					let pointcloud = new PointCloudArena4D(geometry);
-					// loaded(pointcloud);
-					resolve({type: 'pointcloud_loaded', pointcloud: pointcloud});
-				}
-			});
 		} else {
 			//callback({'type': 'loading_failed'});
 			console.error(new Error(`failed to load point cloud from URL: ${path}`));

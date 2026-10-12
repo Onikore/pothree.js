@@ -799,31 +799,8 @@ export class PointCloudOctree extends PointCloudTree {
 
 		let pixelPos = new THREE.Vector2(params.x, params.y);
 
-		let gl = renderer.getContext();
-		gl.enable(gl.SCISSOR_TEST);
-		gl.scissor(
-			parseInt(pixelPos.x - (pickWindowSize - 1) / 2),
-			parseInt(pixelPos.y - (pickWindowSize - 1) / 2),
-			parseInt(pickWindowSize), parseInt(pickWindowSize));
-
-
-		renderer.state.buffers.depth.setTest(pickMaterial.depthTest);
-		renderer.state.buffers.depth.setMask(pickMaterial.depthWrite);
-		renderer.state.setBlending(THREE.NoBlending);
-
-		{ // RENDER
-			renderer.setRenderTarget(pickState.renderTarget);
-			gl.clearColor(0, 0, 0, 0);
-			renderer.clear(true, true, true);
-
-			let tmp = this.material;
-			this.material = pickMaterial;
-
-			pRenderer.renderOctree(this, nodes, camera, pickState.renderTarget);
-
-			this.material = tmp;
-		}
-
+		// Pick window around the cursor, clipped to the render target. (The original read a full
+		// pickWindowSize^2 window into a buffer sized for the clipped one, which failed near the edges.)
 		let clamp = (number, min, max) => Math.min(Math.max(min, number), max);
 
 		let x = parseInt(clamp(pixelPos.x - (pickWindowSize - 1) / 2, 0, width));
@@ -831,15 +808,33 @@ export class PointCloudOctree extends PointCloudTree {
 		let w = parseInt(Math.min(x + pickWindowSize, width) - x);
 		let h = parseInt(Math.min(y + pickWindowSize, height) - y);
 
-		let pixelCount = w * h;
-		let buffer = new Uint8Array(4 * pixelCount);
+		let buffer = new Uint8Array(4 * w * h);
 
-		gl.readPixels(x, y, pickWindowSize, pickWindowSize, gl.RGBA, gl.UNSIGNED_BYTE, buffer);
+		{ // RENDER the nodes on the ray into the pick window (public three.js API only)
+			let renderTarget = pickState.renderTarget;
+			renderTarget.scissor.set(x, y, w, h);
+			renderTarget.scissorTest = true;
 
-		renderer.setRenderTarget(null);
-		renderer.state.reset();
-		renderer.setScissorTest(false);
-		gl.disable(gl.SCISSOR_TEST);
+			let clearColor = renderer.getClearColor(new THREE.Color());
+			let clearAlpha = renderer.getClearAlpha();
+
+			renderer.setRenderTarget(renderTarget);
+			renderer.setClearColor(0x000000, 0);
+			renderer.clear(true, true, true);
+
+			// depth test/write and no blending come from pickMaterial (opacity 1), applied by PointCloudRenderer
+			let tmp = this.material;
+			this.material = pickMaterial;
+
+			pRenderer.renderOctree(this, nodes, camera, renderTarget);
+
+			this.material = tmp;
+
+			renderer.readRenderTargetPixels(renderTarget, x, y, w, h, buffer);
+
+			renderer.setRenderTarget(null);
+			renderer.setClearColor(clearColor, clearAlpha);
+		}
 
 		let pixels = buffer;
 		let ibuffer = new Uint32Array(buffer.buffer);
@@ -847,10 +842,11 @@ export class PointCloudOctree extends PointCloudTree {
 		// find closest hit inside pixelWindow boundaries
 		let min = Number.MAX_VALUE;
 		let hits = [];
-		for (let u = 0; u < pickWindowSize; u++) {
-			for (let v = 0; v < pickWindowSize; v++) {
-				let offset = (u + v * pickWindowSize);
-				let distance = Math.pow(u - (pickWindowSize - 1) / 2, 2) + Math.pow(v - (pickWindowSize - 1) / 2, 2);
+		for (let u = 0; u < w; u++) {
+			for (let v = 0; v < h; v++) {
+				let offset = (u + v * w);
+				// squared distance to the cursor in pixels (same as before for an unclipped window)
+				let distance = Math.pow(x + u - pixelPos.x, 2) + Math.pow(y + v - pixelPos.y, 2);
 
 				let pcIndex = pixels[4 * offset + 3];
 				pixels[4 * offset + 3] = 0;

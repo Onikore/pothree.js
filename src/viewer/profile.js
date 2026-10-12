@@ -185,8 +185,9 @@ class ProfileFakeOctree extends PointCloudTree{
 			let normalized = false;
 			
 			if(this.trueOctree.root.sceneNode){
-				if(this.trueOctree.root.sceneNode.geometry.attributes[attributeName]){
-					normalized = this.trueOctree.root.sceneNode.geometry.attributes[attributeName].normalized;
+				// node.geometryNode.geometry is the loaded data; sceneNode.geometry is PointCloudRenderer's render geometry
+				if(this.trueOctree.root.geometryNode.geometry.attributes[attributeName]){
+					normalized = this.trueOctree.root.geometryNode.geometry.attributes[attributeName].normalized;
 				}
 			}
 			

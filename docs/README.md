@@ -6,7 +6,7 @@
 | [modules.md](modules.md) | назначение каждого файла в `src/` |
 | [rendering.md](rendering.md) | отрисовка облаков: что делает рендерер Potree и как это переносится на three.js |
 | [build.md](build.md) | сборка: gulp, rollup, three.js из npm, import map в примерах |
-| [testing.md](testing.md) | визуальный регресс примеров и smoke-тест форматов |
+| [testing.md](testing.md) | визуальный регресс примеров, smoke-тест форматов, тест picking |
 | [../MIGRATION_PLAN.md](../MIGRATION_PLAN.md) | миграция на актуальный three.js: аудит, целевая архитектура, план шагов, решения |
 | [../CHANGELOG.md](../CHANGELOG.md) | что изменилось для пользователей Potree |
 | [RELEASE.MD](RELEASE.MD) | порядок выпуска (из оригинального репозитория) |

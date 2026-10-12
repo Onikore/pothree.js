@@ -140,6 +140,7 @@ export class PointCloudRenderer {
 			clipPolygons: material.clipPolygons || [],
 			perOctreeDone: false,
 			extraAttributeName: null,
+			nodesDrawn: 0,
 		};
 
 		// Each drawn node uses the internal material, its render geometry and our hook. They stay
@@ -180,8 +181,15 @@ export class PointCloudRenderer {
 			}
 		}
 
-		// the octree's uniforms changed: upload them with the first node (afterwards only per-node ones)
-		rm.uniformsNeedUpdate = true;
+		// Octree-level uniforms are uploaded with the first node only; afterwards three uploads just the
+		// per-node ones. three skips a uniform whose `needsUpdate === false` (WebGLUniforms.upload; not
+		// in the docs, but stable since r1xx - checked in r152 and r186). This is the only reliance on
+		// undocumented three behaviour in Potree; without it every node re-uploads ~60 uniforms.
+		for (let name in rm.uniforms) {
+			if (!PER_NODE_UNIFORMS.has(name)) {
+				rm.uniforms[name].needsUpdate = true;
+			}
+		}
 
 		let autoClear = renderer.autoClear;
 		renderer.autoClear = false;
@@ -463,6 +471,16 @@ export class PointCloudRenderer {
 		const s = this.state;
 		const u = s.uniforms;
 
+		if (s.nodesDrawn === 1) {
+			// the first node has uploaded the octree-level uniforms (see renderOctree)
+			for (let name in u) {
+				if (!PER_NODE_UNIFORMS.has(name)) {
+					u[name].needsUpdate = false;
+				}
+			}
+		}
+		s.nodesDrawn++;
+
 		if (s.visibilityTextureData) {
 			u.uVNStart.value = s.visibilityTextureData.offsets.get(node);
 		}
@@ -496,7 +514,7 @@ export class PointCloudRenderer {
 		}
 
 		if (s.extraAttributeName !== null) {
-			let attribute = geometry.attributes[s.extraAttributeName];
+			let attribute = geometry.userData.source.attributes[s.extraAttributeName];
 			if (geometry.attributes.aExtra !== attribute) {
 				geometry.setAttribute("aExtra", attribute);
 			}
@@ -565,7 +583,8 @@ export class PointCloudRenderer {
 	 * objects under the names the shader uses (`rgba` -> `color`, `return number` -> `returnNumber`,
 	 * ...; legacy mapping: attributeLocations of the removed src/PotreeRenderer.js). three uploads
 	 * buffers per attribute object, so nothing is uploaded twice. The node's own geometry is not
-	 * changed: Potree code (profile, exporters, point queries) iterates its attributes.
+	 * changed: Potree code (profile, exporters, point queries) iterates its attributes; it must use
+	 * node.geometryNode.geometry, not sceneNode.geometry (which is this render geometry).
 	 */
 	getRenderGeometry(geometry) {
 		if (geometry.userData.source) {
@@ -588,12 +607,15 @@ export class PointCloudRenderer {
 				});
 			}
 
+			// only the names the shader declares: fewer attributes for three to check per draw
 			rg = new THREE.BufferGeometry();
 			for (let name of names) {
-				rg.setAttribute(name, geometry.attributes[name]);
+				if (SHADER_ATTRIBUTES.has(name)) {
+					rg.setAttribute(name, geometry.attributes[name]);
+				}
 			}
 			for (let [from, to] of ATTRIBUTE_ALIASES) {
-				if (geometry.attributes[from] && !geometry.attributes[to]) {
+				if (geometry.attributes[from] && !rg.attributes[to]) {
 					rg.setAttribute(to, geometry.attributes[from]);
 				}
 			}
@@ -649,6 +671,18 @@ export class PointCloudRenderer {
 		setUniform(s.uniforms, "uExtraOffset", offset);
 	}
 }
+
+/** Attributes declared in src/materials/shaders/pointcloud.vs. */
+const SHADER_ATTRIBUTES = new Set([
+	"position", "color", "intensity", "classification", "returnNumber", "numberOfReturns",
+	"pointSourceID", "indices", "spacing", "gpsTime", "normal", "aExtra",
+]);
+
+/** Uniforms that change from node to node (see onBeforeRenderNode); all others are per octree. */
+const PER_NODE_UNIFORMS = new Set([
+	"uVNStart", "uDebug", "uLevel", "uNodeSpacing", "uPCIndex",
+	"uClipPolygonVCount", "uClipPolygonWVP", "uClipPolygonVertices", "uShadowWorldView",
+]);
 
 /** Geometry attribute name -> shader attribute name (legacy `attributeLocations`). */
 const ATTRIBUTE_ALIASES = [

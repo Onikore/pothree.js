@@ -33,8 +33,6 @@
 | `utils.js` | 1098 | `Utils`: загрузка skybox, сетка, луч из мыши, `getMousePointCloudIntersection`, отладочная геометрия, виды камеры, азимут, `generateDataTexture` и др. |
 | `Version.js` | 44 | разбор и сравнение строки версии `"major.minor"` (версии форматов в метаданных) |
 | `KeyCodes.js` | 19 | коды клавиш |
-| `InterleavedBuffer.js` | 39 | **мёртвый** |
-| `BitReader.js` | 50 | **мёртвый** |
 
 ## Расширения three (`src/extensions/`)
 
@@ -68,7 +66,6 @@
 | `BinaryDecoderWorker.js` | бинарные узлы Potree 1.x |
 | `LASDecoderWorker.js`, `LazLoaderWorker.js`, `LASLAZWorker.js` | LAS/LAZ (laz-perf из `libs/plasio`) |
 | `EptBinaryDecoderWorker.js`, `EptLaszipDecoderWorker.js`, `EptZstandardDecoderWorker.js` (+ `_preamble`) | узлы EPT |
-| `DEMWorker.js` | **мёртвый** |
 
 ## Материалы и шейдеры (`src/materials/`)
 
@@ -77,13 +74,10 @@
 | `PointCloudMaterial.js` | материал облака: все настройки отображения → `#define` + uniforms; градиенты, matcap, LUT классификации |
 | `EyeDomeLightingMaterial.js` | проход EDL |
 | `NormalizationMaterial.js`, `NormalizationEDLMaterial.js` | нормализация взвешенных splats (HQ), с EDL и без |
-| `BlurMaterial.js` | размытие |
 | `ClassificationScheme.js` | цвета и видимость классов ASPRS по умолчанию |
 | `Gradients.js` | градиенты (spectral, rainbow, viridis, …) |
 | `shaders/pointcloud.vs/.fs` | основной шейдер облака (GLSL ES 1.0) |
-| `shaders/pointcloud_sm.vs/.fs` | глубина облака для shadow map |
-| `shaders/edl.*`, `normalize*.*`, `blur.*` | постпроцесс |
-| `shaders/pointcloud_dynamic.vs/.fs` | **мёртвые** (не входят в список шейдеров `gulpfile.js`) |
+| `shaders/edl.*`, `normalize*.*` | постпроцесс |
 
 ## Вьюер (`src/viewer/`)
 
@@ -111,8 +105,6 @@
 | `OrbitControls.js` | вращение вокруг точки |
 | `EarthControls.js` | «хватай землю» |
 | `FirstPersonControls.js` | полёт |
-| `GeoControls.js` | полёт без захвата мыши; **не используется** (создание закомментировано в `viewer.js:1121`) |
-| `DeviceOrientationControls.js` | ориентация устройства |
 
 ## Инструменты (`src/utils/`)
 
@@ -148,6 +140,12 @@
 
 | Путь | Назначение |
 |---|---|
-| `src/arena4d/` | облака Arena4D (kd-дерево); **WebGL** (picking через `renderer.state`) |
 | `src/tools/` | генерация страниц примеров и иконок (Node, при сборке) |
-| `src/server/getPoints.php` | старый серверный скрипт выдачи точек; из JS не вызывается |
+
+## Удалено в форке
+
+VR (`VRControls`, `VRButton`), Arena4D (`src/arena4d/`, формат `.vpc`), `DeviceOrientationControls`,
+`GeoControls`, мёртвый код (`DEMWorker`, `InterleavedBuffer`, `BitReader`, `BlurMaterial`, шейдеры
+`pointcloud_dynamic.*`, `pointcloud_sm.*`, `blur.*`, `src/server/getPoints.php`, `libs/MeshLine`),
+интеграция Cesium (примеры `cesium_*`, `annotation_hierarchy`, `libs/Cesium`), собственный WebGL-рендерер
+`PotreeRenderer.js`. Причины — `MIGRATION_PLAN.md`, решения J и K.

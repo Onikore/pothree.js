@@ -27,7 +27,6 @@ import {Compass} from "../utils/Compass.js";
 import {OrbitControls} from "../navigation/OrbitControls.js";
 import {FirstPersonControls} from "../navigation/FirstPersonControls.js";
 import {EarthControls} from "../navigation/EarthControls.js";
-import {DeviceOrientationControls} from "../navigation/DeviceOrientationControls.js";
 import { EventDispatcher } from "../EventDispatcher.js";
 import { ClassificationScheme } from "../materials/ClassificationScheme.js";
 
@@ -1094,7 +1093,6 @@ export class Viewer extends EventDispatcher{
 		}
 
 		// { // create GEO CONTROLS
-		//	this.geoControls = new GeoControls(this.scene.camera, this.renderer.domElement);
 		//	this.geoControls.enabled = false;
 		//	this.geoControls.addEventListener("start", this.disableAnnotations.bind(this));
 		//	this.geoControls.addEventListener("end", this.enableAnnotations.bind(this));
@@ -1117,12 +1115,6 @@ export class Viewer extends EventDispatcher{
 			this.earthControls.addEventListener('end', this.enableAnnotations.bind(this));
 		}
 
-		{ // create DEVICE ORIENTATION CONTROLS
-			this.deviceControls = new DeviceOrientationControls(this);
-			this.deviceControls.enabled = false;
-			this.deviceControls.addEventListener('start', this.disableAnnotations.bind(this));
-			this.deviceControls.addEventListener('end', this.enableAnnotations.bind(this));
-		}
 
 
 
@@ -1703,13 +1695,7 @@ export class Viewer extends EventDispatcher{
 		this.scene.cameraP.fov = this.fov;
 		
 		let controls = this.getControls();
-		if (controls === this.deviceControls) {
-			this.controls.setScene(scene);
-			this.controls.update(delta);
-
-			this.scene.cameraP.position.copy(scene.view.position);
-			this.scene.cameraO.position.copy(scene.view.position);
-		} else if (controls !== null) {
+		if (controls !== null) {
 			controls.setScene(scene);
 			controls.update(delta);
 

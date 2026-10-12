@@ -64,15 +64,11 @@ let lazyLibs = {
 let shaders = [
 	"src/materials/shaders/pointcloud.vs",
 	"src/materials/shaders/pointcloud.fs",
-	"src/materials/shaders/pointcloud_sm.vs",
-	"src/materials/shaders/pointcloud_sm.fs",
 	"src/materials/shaders/normalize.vs",
 	"src/materials/shaders/normalize.fs",
 	"src/materials/shaders/normalize_and_edl.fs",
 	"src/materials/shaders/edl.vs",
 	"src/materials/shaders/edl.fs",
-	"src/materials/shaders/blur.vs",
-	"src/materials/shaders/blur.fs",
 ];
 
 // For development, it is now possible to use 'gulp webserver'

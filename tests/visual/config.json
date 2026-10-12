@@ -10,22 +10,6 @@
 		"github": {
 			"pointclouds": false
 		},
-		"cesium_ca13": {
-			"maxDiff": 0.05,
-			"note": "Cesium map tiles come from the network"
-		},
-		"cesium_retz": {
-			"maxDiff": 0.05,
-			"note": "Cesium map tiles come from the network"
-		},
-		"cesium_sorvilier": {
-			"maxDiff": 0.05,
-			"note": "Cesium map tiles come from the network"
-		},
-		"annotation_hierarchy": {
-			"maxDiff": 0.05,
-			"note": "Cesium map tiles come from the network"
-		},
 		"light_animated": {
 			"maxDiff": 0.1,
 			"animated": true,
@@ -55,9 +39,6 @@
 		},
 		"vr_morro_bay": {
 			"skip": "data on potree.org is blocked by CORS outside potree.org; Potree 2.0 is covered by potree2*.html"
-		},
-		"arena4d": {
-			"skip": "Arena4D test server answers 503"
 		},
 		"ept_binary": {
 			"note": "broken in the original (node.url() after COPC refactor); reference image is ept.png - same page and data in EPT LAZ"

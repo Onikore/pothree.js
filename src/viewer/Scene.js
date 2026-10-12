@@ -39,7 +39,6 @@ export class Scene extends EventDispatcher{
 		this.orbitControls = null;
 		this.earthControls = null;
 		this.geoControls = null;
-		this.deviceControls = null;
 		this.inputHandler = null;
 
 		this.view = new View();
