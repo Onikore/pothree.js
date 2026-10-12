@@ -87,7 +87,7 @@
 
 | Файл | Назначение |
 |---|---|
-| `viewer.js` | `Viewer`: создание WebGL-контекста и `WebGLRenderer`, цикл `loop/update/render`, настройки, VR-рендер, drag&drop |
+| `viewer.js` | `Viewer`: создание WebGL-контекста и `WebGLRenderer`, цикл `loop/update/render`, настройки, drag&drop (VR-рендер удалён в форке) |
 | `Scene.js` | `Scene`: камеры, облака, измерения, объёмы, профили, аннотации, изображения |
 | `View.js` | положение камеры как `position` + `yaw/pitch` + `radius` |
 | `PotreeRenderer.js` | рендерер кадра без EDL |
@@ -98,7 +98,6 @@
 | `profile.js`, `profile.html` | окно профиля высот (d3) |
 | `sidebar.js`, `sidebar.html`, `potree.css` | боковая панель (jQuery UI, jstree, spectrum) |
 | `PropertyPanels/*.js` | панели свойств выбранного объекта (облако, измерения, объёмы, камера, анимация) |
-| `VRButton.js` | кнопка входа в VR; доработанная копия `VRButton` из three (события `onStart`/`onEnd`, асинхронная проверка поддержки). До миграции лежала в `libs/three.js/extra/` |
 | `HierarchicalSlider.js` | слайдер диапазона (фильтр GPS time) |
 | `LoadProject.js`, `SaveProject.js` | проект в JSON (облака, измерения, объёмы, аннотации, вид) |
 
@@ -112,7 +111,6 @@
 | `FirstPersonControls.js` | полёт |
 | `GeoControls.js` | полёт без захвата мыши; **не используется** (создание закомментировано в `viewer.js:1121`) |
 | `DeviceOrientationControls.js` | ориентация устройства |
-| `VRControls.js` | WebXR-контроллеры |
 
 ## Инструменты (`src/utils/`)
 

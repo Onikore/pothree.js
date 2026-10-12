@@ -12,7 +12,7 @@
         │
  src/utils/*, modules/*    инструменты (измерения, профиль, clipping, аннотации, изображения, анимация)
         │
- src/navigation/*          контролы камеры (Orbit, Earth, FirstPerson, VR)
+ src/navigation/*          контролы камеры (Orbit, Earth, FirstPerson; VR удалён в форке)
         │
  src/PointCloudOctree.js   облако в сцене: дерево узлов, материал, picking, запросы точек
  src/Potree_update_visibility.js   выбор видимых узлов (LOD) и очередь загрузки
@@ -192,3 +192,4 @@ clipping (box, polygon, sphere, plane). Фрагментный — форму т
 | 1 | three.js берётся из npm (`three@0.124.0`, тот же r124), `libs/three.js` удалена; импорты в `src/` и примерах — `"three"`, `"three/examples/jsm/..."`; примеры получили import map. Собственный `VRButton` Potree перенесён в `src/viewer/VRButton.js`. Сборка — rollup 4 (`rollup.config.mjs`), ошибка rollup валит `npm run build`. Подробно — `docs/build.md`. |
 | 2 | `THREE.Math` → `THREE.MathUtils`; `RGBFormat` → `RGBAFormat` (фон-градиент); все `THREE.Geometry` (линии и рамки измерений, профиля, объёмов, clip volume, гизмо, сетки, отладочные линии, путь анимации, рамки ориентированных снимков) → `BufferGeometry.setFromPoints`, обновление вершин — через `attributes.position.setXYZ`; исправлены ошибки и аллокации из таблицы «Проблемы». |
 | 3 | three r124 → r138 → r151 (`three@0.151.3`). r137 пропущена как точка остановки: её `package.json` (`exports`) дописывает `.js` к путям аддонов, r138 содержит все изменения r137. Правки: `renderer.render(scene, camera, target)` → `setRenderTarget` + `render` (`Utils.screenPass`); `raycaster.intersectObjects(..., false)` явно (в r133 по умолчанию стало рекурсивно); `Euler.toVector3()` удалён; `CubeGeometry` → `BoxGeometry`; `PlaneBufferGeometry` → `PlaneGeometry`; тип `DepthTexture` в `PointCloudSM` задан явно (`UnsignedShortType`, как в r124); `THREE.PointCloud` → `new THREE.Points`; убраны ссылки на удалённые константы (`VertexColors`, `RGBFormat`, `UnsignedShort565Type`), в `paramThreeToGL` — защита от `undefined`. |
+| — | VR/WebXR удалён по решению владельца форка: `VRControls`, `VRButton`, `Viewer.renderVR()`, `viewer.vrControls`, `viewer.sceneVR`, `scene.cameraVR`, `CameraMode.VR`, события `vr_start`/`vr_end`. Примеры `vr_*` остались обычными страницами с данными Potree 2.0 с potree.org. |

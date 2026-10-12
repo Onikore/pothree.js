@@ -22,6 +22,9 @@
   и `planeFrame`, линии `Profile`, рамка `TransformationTool`, `Utils.createGrid()`,
   `Utils.debugLine()`, `Utils.debugCircle()`, рамки ориентированных снимков. Код, читавший или
   менявший `.vertices`, должен работать с `attributes.position`.
+- **VR/WebXR удалён.** Больше нет `Potree.VRControls`, кнопки VR, `viewer.vrControls`,
+  `viewer.sceneVR`, `viewer.renderVR()`, `scene.cameraVR`, `CameraMode.VR` и событий вьюера
+  `vr_start`/`vr_end`. Примеры `vr_*.html` — обычные страницы с данными Potree 2.0 с potree.org.
 - Поддержка WebGL1 будет прекращена (three.js r163+ её не имеет). Пока ещё работает.
 
 ### Исправлено
@@ -56,7 +59,5 @@
 
 ### Запланировано
 
-- Удаление VR/WebXR (`VRControls`, `VRButton`, `renderVR`); примеры `vr_*` станут обычными
-  страницами с теми же данными Potree 2.0.
 - Отрисовка облаков штатными средствами three.js вместо собственного WebGL-рендерера.
 - three.js как `peerDependency`, ES-модульная сборка, две точки входа: ядро и вьюер.

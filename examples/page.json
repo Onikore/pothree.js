@@ -38,8 +38,11 @@
 		{"thumb": "thumbnails/cesium_sorvilier.png", "label": "Cesium Sorvilier", "url": "cesium_sorvilier.html"},
 		{"thumb": "thumbnails/custom_sidebar_section.png", "label": "Custom Sidebar Section", "url": "custom_sidebar_section.html"},
 		{"thumb": "thumbnails/embedded_iframe.png", "label": "Embedded Iframe", "url": "embedded_iframe.html"},
-		{"thumb": "thumbnails/gradient_colors.png", "label": "Gradient Colors", "url": "gradient_colors.html"}
+		{"thumb": "thumbnails/gradient_colors.png", "label": "Gradient Colors", "url": "gradient_colors.html"},
+		{"thumb": "thumbnails/lion.png", "label": "Potree 2.0", "url": "potree2.html"},
+		{"thumb": "thumbnails/lion.png", "label": "Potree 2.0 Brotli", "url": "potree2_brotli.html"}
 	],
+	// vr_* pages: VR was removed in Pothree; they now only load Potree 2.0 data from potree.org (CORS: works only there)
 	"VR": [
 		{"thumb": "thumbnails/heidentor.jpg", "label": "Heidentor", "url": "vr_heidentor.html"},
 		{"thumb": "thumbnails/eclepens.jpg", "label": "Eclepens", "url": "vr_eclepens.html"},

@@ -101,7 +101,7 @@ async function createGithubPage(){
 			${exampleCode}
 		</table>
 
-		<h1>VR</h1>
+		<h1>Potree 2.0 (data hosted on potree.org)</h1>
 
 		<table>
 			${vrCode}

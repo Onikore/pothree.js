@@ -79,7 +79,7 @@
 | `THREE.LuminanceFormat` | PotreeRenderer.js:48 | удалён (WebGL2) |
 | UMD `build/three.js`, `three.min.js` | вендорены, в src не используются | удалены r161 |
 | WebGL1 | viewer.js:1431 | deprecated r153, **удалён r163** |
-| `renderer.xr.*` | viewer.js, VRControls.js | r162 hand tracking off по умолчанию; r169 слои камеры; r187+ derived XR camera |
+| `renderer.xr.*` | viewer.js, VRControls.js | r162 hand tracking off по умолчанию; r169 слои камеры; r187+ derived XR camera — **неактуально: VR удалён** |
 
 ## 3. Breaking changes, реально затрагивающие Potree (по migration guide)
 
@@ -99,7 +99,7 @@
 | r154→r155 | `useLegacyLights=false` по умолчанию (физ. интенсивности) | примеры с мешами и светом (light*.html) |
 | r160→r161 | UMD удалены | libs/three.js/build/three(.min).js |
 | r162→r163 | **WebGL1 удалён из WebGLRenderer** | viewer.js:1431, Features.js, все шейдеры |
-| r161→r162, r168→r169 | XR: hand tracking, слои камеры | VRControls.js, viewer.js VR‑путь |
+| r161→r162, r168→r169 | XR: hand tracking, слои камеры | неактуально: VR удалён |
 
 ## 4. Прочие зависимости в `libs/`
 
@@ -288,7 +288,7 @@ r163. Делаем его на r152: там ещё есть WebGL1, поэтом
 | 4 | r151→r152: color management закрепить на поведении r124 (решение D), сверить пиксели | r152 | M |
 | 5 | **Новый рендеринг облаков** на three (раздел 6.1), материал сразу на «возможностях шейдера» (6.2 п.1); WebGL2‑контекст для `'three'`; legacy за флагом. Перенос всех раскрасок, фильтров, размеров, форм | r152 | XL |
 | 6 | EDL, HQ splats, picking, профиль, `PointCloudSM`, Arena4D — на новый рендеринг; паритет пикселей и бенчмарк против legacy | r152 | L |
-| 7 | Удаление legacy‑рендерера, `Features.js` на WebGL2; r152→r163→r186: `useLegacyLights`, XR, последние deprecations; three → `peerDependency` | r186 | M |
+| 7 | Удаление legacy‑рендерера, `Features.js` на WebGL2; r152→r163→r186: `useLegacyLights`, последние deprecations; three → `peerDependency` | r186 | M |
 | 7а | Размер (6.5): точки входа `potree` и `potree/viewer`, ленивые `import()`, минификация шейдеров, бюджет размера в CI | r186 | M |
 | 8 | Каркас операций: `PointQuery` (+ перевод `ProfileRequest`), `EditLayer` + выделение + undo/redo, GPU‑выборка по экрану (box/lasso), `viewer.operations.register`; штатные инструменты — через регистрацию | r186 | L |
 | 9 | Этапы 3–5: ручная и автоматическая проверка, производительность, docs, CI | r186 | L |
@@ -317,6 +317,8 @@ Vite: rollup уже есть, воркеры и ресурсы из gulp пер�
 
 **G. Правки точек — ПРИНЯТО:** хранить отдельным файлом правок, исходные данные не менять. Запись
 обратно в LAS/Potree 2.0 — отдельная задача после каркаса операций.
+
+**J. VR/WebXR — УДАЛЁН (решение владельца, 2026‑10‑12):** не нужен; снимает риски XR‑изменений three (r162, r169, r187) и пункт VR из Этапа 3.
 
 **H. Язык — ПРИНЯТО:** JS + JSDoc, без перевода Potree на TypeScript; `.d.ts` генерировать для пользователей npm.
 

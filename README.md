@@ -12,7 +12,7 @@
 | three.js | npm-пакет `three` (версия в `package.json`), не `libs/three.js` |
 | Сборка | rollup 4 → `build/potree/potree.js` (UMD, глобальный `Potree`, three.js внутри) |
 | Примеры | `examples/*.html`, three.js подключается через import map из `node_modules` |
-| VR/WebXR | будет удалён |
+| VR/WebXR | удалён |
 
 ### Быстрый старт
 
@@ -276,6 +276,8 @@ Copy the converted directory into &lt;potreeDirectory&gt;/pointclouds/data_conve
 </details>
 
 # VR
+
+**Pothree:** VR/WebXR support is removed in this fork. The pages below are the original Potree demos on potree.org (with VR). In this repository `examples/vr_*.html` are plain viewer pages that load the same Potree 2.0 data from potree.org, which only works when served from potree.org (CORS).
 
 <table>
 	<tr>
