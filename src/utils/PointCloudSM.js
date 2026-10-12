@@ -14,7 +14,7 @@ export class PointCloudSM{
 			format: THREE.RGBAFormat,
 			type: THREE.FloatType
 		});
-		this.target.depthTexture = new THREE.DepthTexture();
+		this.target.depthTexture = new THREE.DepthTexture(undefined, undefined, THREE.UnsignedShortType); // r124 default type; r141 changed the default to UnsignedIntType
 		this.target.depthTexture.type = THREE.UnsignedIntType;
 
 		//this.threeRenderer.setClearColor(0x000000, 1);

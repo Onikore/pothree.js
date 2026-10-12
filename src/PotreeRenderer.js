@@ -8,6 +8,10 @@ import {PointSizeType, ClipTask, ElevationGradientRepeat} from "./defines.js";
 // Copied from three.js: WebGLRenderer.js
 function paramThreeToGL(_gl, p) {
 
+	// Constants removed from newer three.js (RGBFormat, LuminanceFormat, UnsignedShort565Type, ...)
+	// are undefined and would otherwise match an undefined p. Same result as with r124: 0.
+	if (p === undefined) return 0;
+
 	let extension;
 
 	if (p === THREE.RepeatWrapping) return _gl.REPEAT;
@@ -25,7 +29,6 @@ function paramThreeToGL(_gl, p) {
 	if (p === THREE.UnsignedByteType) return _gl.UNSIGNED_BYTE;
 	if (p === THREE.UnsignedShort4444Type) return _gl.UNSIGNED_SHORT_4_4_4_4;
 	if (p === THREE.UnsignedShort5551Type) return _gl.UNSIGNED_SHORT_5_5_5_1;
-	if (p === THREE.UnsignedShort565Type) return _gl.UNSIGNED_SHORT_5_6_5;
 
 	if (p === THREE.ByteType) return _gl.BYTE;
 	if (p === THREE.ShortType) return _gl.SHORT;
@@ -43,7 +46,6 @@ function paramThreeToGL(_gl, p) {
 	}
 
 	if (p === THREE.AlphaFormat) return _gl.ALPHA;
-	if (p === THREE.RGBFormat) return _gl.RGB;
 	if (p === THREE.RGBAFormat) return _gl.RGBA;
 	if (p === THREE.LuminanceFormat) return _gl.LUMINANCE;
 	if (p === THREE.LuminanceAlphaFormat) return _gl.LUMINANCE_ALPHA;

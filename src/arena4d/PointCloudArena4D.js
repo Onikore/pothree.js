@@ -60,7 +60,7 @@ export class PointCloudArena4DNode extends PointCloudTreeNode {
 		}
 
 		let node = new PointCloudArena4DNode();
-		let sceneNode = THREE.PointCloud(geometryNode.geometry, this.kdtree.material);
+		let sceneNode = new THREE.Points(geometryNode.geometry, this.kdtree.material); // THREE.PointCloud was the legacy alias of Points
 		sceneNode.visible = false;
 
 		node.kdtree = this.kdtree;
@@ -115,7 +115,7 @@ export class PointCloudArena4D extends PointCloudTree{
 		this.pcoGeometry = geometry;
 		this.boundingBox = this.pcoGeometry.boundingBox;
 		this.boundingSphere = this.pcoGeometry.boundingSphere;
-		this.material = new PointCloudMaterial({vertexColors: THREE.VertexColors, size: 0.05, treeType: TreeType.KDTREE});
+		this.material = new PointCloudMaterial({size: 0.05, treeType: TreeType.KDTREE});
 		this.material.sizeType = PointSizeType.ATTENUATED;
 		this.material.size = 0.05;
 		this.profileRequests = [];

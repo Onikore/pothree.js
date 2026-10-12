@@ -455,7 +455,7 @@ export class VRControls extends EventDispatcher{
 	createInfo(){ 
 
 		let texture = new THREE.TextureLoader().load(`${Potree.resourcePath}/images/vr_controller_help.jpg`);
-		let plane = new THREE.PlaneBufferGeometry(1, 1, 1, 1);
+		let plane = new THREE.PlaneGeometry(1, 1, 1, 1);
 		let infoMaterial = new THREE.MeshBasicMaterial({map: texture});
 		let infoNode = new THREE.Mesh(plane, infoMaterial);
 

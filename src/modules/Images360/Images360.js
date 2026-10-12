@@ -220,7 +220,7 @@ export class Images360 extends EventDispatcher{
 
 		// let tStart = performance.now();
 		raycaster.ray.copy(ray);
-		let intersections = raycaster.intersectObjects(this.node.children);
+		let intersections = raycaster.intersectObjects(this.node.children, false);
 
 		if(intersections.length === 0){
 			// label.visible = false;

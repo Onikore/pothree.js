@@ -281,7 +281,7 @@ r163. Делаем его на r152: там ещё есть WebGL1, поэтом
 |---|---|---|---|
 | 1 | Инфраструктура (Этап 1): ветка `three-upgrade`, Playwright‑регресс, smoke форматов, three из npm (`three@0.124.0`, нулевой diff), rollup v4, import map в примерах. Единая копия three на странице (ES‑сборка с `three` как `external`) перенесена в 7а: UMD без вшитой three невозможен, т.к. в r160+ нет UMD‑сборки three | r124 | M |
 | 2 | Подготовка на r124: `THREE.Math`→`MathUtils`, `RGBFormat`→`RGBAFormat`, `Geometry`/`Face3`→`BufferGeometry`; исправление найденных ошибок (двойная загрузка Potree 2.0, импорт `.vpc`, `exports.*`) и лишних аллокаций в `updateVisibility`. Глобальное `Potree.*` в ядре — в 7а, вместе с ES‑сборкой, где его можно проверить | r124 | M |
-| 3 | Прыжки r125→r137→r151: `PlaneBufferGeometry`, addons (`Line2`, `LineMaterial`, `XRControllerModelFactory`) из `three/addons` | r151 | M |
+| 3 | Прыжки r125→r138→r151 (r138 вместо r137: у r137 сломанный `exports` для аддонов): `PlaneBufferGeometry`, addons (`Line2`, `LineMaterial`, `XRControllerModelFactory`) из `three/addons` | r151 | M |
 | 4 | r151→r152: color management закрепить на поведении r124 (решение D), сверить пиксели | r152 | M |
 | 5 | **Новый рендеринг облаков** на three (раздел 6.1), материал сразу на «возможностях шейдера» (6.2 п.1); WebGL2‑контекст для `'three'`; legacy за флагом. Перенос всех раскрасок, фильтров, размеров, форм | r152 | XL |
 | 6 | EDL, HQ splats, picking, профиль, `PointCloudSM`, Arena4D — на новый рендеринг; паритет пикселей и бенчмарк против legacy | r152 | L |

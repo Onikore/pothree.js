@@ -161,7 +161,6 @@ export class PointCloudMaterial extends THREE.RawShaderMaterial {
 		this.vertexShader = Shaders['pointcloud.vs'];
 		this.fragmentShader = Shaders['pointcloud.fs'];
 		
-		this.vertexColors = THREE.VertexColors;
 
 		this.updateShaderSource();
 	}

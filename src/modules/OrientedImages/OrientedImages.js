@@ -328,7 +328,7 @@ export class OrientedImageLoader{
 				- ( onClickPosition.y * 2 ) + 1 );
 			const objects = orientedImages.map(i => i.mesh);
 			raycaster.setFromCamera( mouse, camera );
-			const intersects = raycaster.intersectObjects( objects );
+			const intersects = raycaster.intersectObjects( objects, false );
 			let selectionChanged = false;
 
 			if ( intersects.length > 0){
