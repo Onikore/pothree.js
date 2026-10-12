@@ -1,4 +1,45 @@
+# Pothree — Potree на актуальном three.js
 
+Форк [Potree](https://github.com/potree/potree) 1.8, который переводится с вшитой копии three.js r124
+на актуальный three.js из npm. Функциональность и картинка должны совпадать с оригиналом; каждое
+отличие проверяется визуальными регресс-тестами.
+
+**Статус:** идёт миграция. Сейчас three.js **r151** (`three@0.151.3`), цель — r186.
+Что изменилось — [CHANGELOG.md](CHANGELOG.md), план и решения — [MIGRATION_PLAN.md](MIGRATION_PLAN.md).
+
+| | |
+|---|---|
+| three.js | npm-пакет `three` (версия в `package.json`), не `libs/three.js` |
+| Сборка | rollup 4 → `build/potree/potree.js` (UMD, глобальный `Potree`, three.js внутри) |
+| Примеры | `examples/*.html`, three.js подключается через import map из `node_modules` |
+| VR/WebXR | будет удалён |
+
+### Быстрый старт
+
+```bash
+npm install          # зависимости + сборка в build/potree
+npm start            # пересборка при изменениях + сервер на http://localhost:1234
+```
+
+Примеры — http://localhost:1234/examples/.
+
+### Тесты
+
+```bash
+npx playwright install chromium
+node tests/visual/run.mjs --jobs 2               # все примеры против эталона
+node tests/visual/run.mjs --group formats        # smoke-тест форматов
+```
+
+Тесты рисуют облака на CPU и сильно грузят процессор. Подробно — [docs/testing.md](docs/testing.md).
+
+### Документация
+
+[docs/README.md](docs/README.md): устройство кода, карта файлов, сборка, тесты.
+
+---
+
+Ниже — оригинальный README Potree. Где поведение форка отличается, это отмечено.
 
 # About
 
@@ -36,6 +77,7 @@ Go to http://localhost:1234/examples/ to test the examples.
 ### Deploy to a server
 
 * Simply upload the Potree folderm with all your point clouds, the build directory, and your html files to a web server.
+* **Pothree:** if you deploy the examples (or pages built like them), also upload `node_modules/three` — the examples load three.js from there through an import map.
 * It is not required to install node.js on your webserver. All you need is to host your files online. 
 
 ### Convert Point Clouds to Potree Format
