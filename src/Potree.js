@@ -1,4 +1,6 @@
 
+import "./threeSetup.js"; // must stay the first import, see the file
+
 export * from "./Actions.js";
 export * from "./AnimationPath.js";
 export * from "./Annotation.js";

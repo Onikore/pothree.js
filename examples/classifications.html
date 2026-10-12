@@ -50,6 +50,7 @@
 	<script type="module">
 
 		import * as THREE from "three";
+		THREE.ColorManagement.enabled = false; // keep three.js r124 colors, see src/threeSetup.js
 	
 		window.viewer = new Potree.Viewer(document.getElementById("potree_render_area"));
 
@@ -85,6 +86,7 @@
 	<script type="module">
 
 		import * as THREE from "three";
+		THREE.ColorManagement.enabled = false; // keep three.js r124 colors, see src/threeSetup.js
 
 		window.setDefaultScheme = function(){
 			viewer.setClassifications(Potree.ClassificationScheme.DEFAULT);

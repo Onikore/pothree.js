@@ -44,6 +44,7 @@
 	<script type="module">
 
 	import * as THREE from "three";
+	THREE.ColorManagement.enabled = false; // keep three.js r124 colors, see src/threeSetup.js
 	
 		window.viewer = new Potree.Viewer(document.getElementById("potree_render_area"));
 		
@@ -90,6 +91,7 @@
 	<script type="module">
 
 	import * as THREE from "three";
+	THREE.ColorManagement.enabled = false; // keep three.js r124 colors, see src/threeSetup.js
 
 		const cameraParamsPath = "http://5.9.65.151/mschuetz/potree/resources/pointclouds/helimap/epalinges/img_selected/IXM35_190522_nodistortion.xml";
 		const imageParamsPath = "http://5.9.65.151/mschuetz/potree/resources/pointclouds/helimap/epalinges/img_selected/Calib190522_MN95_NF2_cam_estim.txt";

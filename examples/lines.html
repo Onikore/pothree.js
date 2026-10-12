@@ -45,6 +45,7 @@
 	<script type="module">
 
 		import * as THREE from "three";
+		THREE.ColorManagement.enabled = false; // keep three.js r124 colors, see src/threeSetup.js
 		import {Line2} from "three/examples/jsm/lines/Line2.js";
 		import {LineGeometry} from "three/examples/jsm/lines/LineGeometry.js";
 		import {LineMaterial} from "three/examples/jsm/lines/LineMaterial.js";

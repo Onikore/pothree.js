@@ -1371,6 +1371,7 @@ export class Viewer extends EventDispatcher{
 			premultipliedAlpha: false,
 			canvas: canvas,
 			context: context});
+		this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // keep r124 colors, see src/threeSetup.js
 		this.renderer.sortObjects = false;
 		this.renderer.setSize(width, height);
 		this.renderer.autoClear = false;

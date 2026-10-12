@@ -50,6 +50,7 @@
 	<script type="module">
 
 		import * as THREE from "three";
+		THREE.ColorManagement.enabled = false; // keep three.js r124 colors, see src/threeSetup.js
 
 		$("#animation_toggle").click( () => {
 			if(!animation.tween){

@@ -8,6 +8,7 @@
 
 | Файл | Строк | Назначение |
 |---|---|---|
+| `threeSetup.js` | 18 | глобальные настройки three.js для Potree (выключает управление цветом r152+); импортируется первым |
 | `Potree.js` | 306 | точка входа: реэкспорт всего API, глобальное состояние (`pointBudget`, `lru`, `workerPool`, пути), `loadPointCloud()`, jQuery-плагин `selectgroup` |
 | `Potree_update_visibility.js` | 416 | LOD: `updatePointClouds()` → `updateVisibility()` — выбор видимых узлов по приоритету, бюджет точек, очередь загрузки |
 | `PointCloudTree.js` | 50 | базовые классы `PointCloudTree` (Object3D) и `PointCloudTreeNode` |

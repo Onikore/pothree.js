@@ -45,6 +45,7 @@
 	<script type="module">
 
 		import * as THREE from "three";
+		THREE.ColorManagement.enabled = false; // keep three.js r124 colors, see src/threeSetup.js
 		import {PLYLoader} from "three/examples/jsm/loaders/PLYLoader.js";
 		import {OBJLoader} from "three/examples/jsm/loaders/OBJLoader.js";
 	

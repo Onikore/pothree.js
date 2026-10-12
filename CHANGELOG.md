@@ -5,7 +5,7 @@
 
 ## Не выпущено — ветка `three-upgrade`
 
-Идёт миграция на актуальный three.js. Сейчас three.js r151 (`three@0.151.3`), цель — r186.
+Идёт миграция на актуальный three.js. Сейчас three.js r152 (`three@0.152.2`), цель — r186.
 
 ### Ломающие изменения
 
@@ -25,6 +25,11 @@
 - **VR/WebXR удалён.** Больше нет `Potree.VRControls`, кнопки VR, `viewer.vrControls`,
   `viewer.sceneVR`, `viewer.renderVR()`, `scene.cameraVR`, `CameraMode.VR` и событий вьюера
   `vr_start`/`vr_end`. Примеры `vr_*.html` — обычные страницы с данными Potree 2.0 с potree.org.
+- **Управление цветом three.js выключено** (`THREE.ColorManagement.enabled = false`, вывод
+  `LinearSRGBColorSpace`), чтобы цвета совпадали с оригиналом (three r124 цветом не управлял).
+  Potree выключает его в своей копии three при загрузке. Если страница импортирует **свою** копию
+  three (как все примеры), выключите и в ней, сразу после импорта:
+  `THREE.ColorManagement.enabled = false;` — иначе цвета ваших объектов будут темнее.
 - Поддержка WebGL1 будет прекращена (three.js r163+ её не имеет). Пока ещё работает.
 
 ### Исправлено
@@ -35,9 +40,11 @@
   `PointCloudArena4D`, `PointCloudArena4DGeometry` и их узлы теперь экспортируются из `Potree`.
   Проверить работу нельзя: сервер тестовых данных Arena4D недоступен.
 - `npm run build` не завершался ошибкой, когда падал rollup.
-- Примеры `ept_binary` и `ept_zstandard` не загружали облако: загрузчик EPT берёт `window.Copc` для
-  всех типов EPT, а эти страницы не подключали `libs/copc/index.js`. **Свои страницы с EPT должны
-  подключать `libs/copc/index.js`**.
+- **EPT binary и EPT zstandard не загружались вообще** (с добавления COPC в 2023 г.): их загрузчик
+  обращался к удалённому `node.url()` и старым полям узла. Переведён на новый API узлов EPT, как
+  загрузчик EPT LAZ.
+- Примеры `ept_binary` и `ept_zstandard` не подключали `libs/copc/index.js`, а загрузчик EPT берёт
+  `window.Copc` для всех типов EPT. **Свои страницы с EPT должны подключать `libs/copc/index.js`**.
 
 ### Изменено
 

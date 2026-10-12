@@ -652,6 +652,7 @@ export class ProfileWindow extends EventDispatcher {
 
 	initTHREE () {
 		this.renderer = new THREE.WebGLRenderer({alpha: true, premultipliedAlpha: false});
+		this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // keep r124 colors, see src/threeSetup.js
 		this.renderer.setClearColor(0x000000, 0);
 		this.renderer.setSize(10, 10);
 		this.renderer.autoClear = false;
