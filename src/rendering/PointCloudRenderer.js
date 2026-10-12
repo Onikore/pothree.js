@@ -5,7 +5,7 @@ import {PointSizeType, ClipTask, ElevationGradientRepeat} from "../defines.js";
 /**
  * Draws point clouds with three.js (THREE.Points + RawShaderMaterial) instead of raw WebGL.
  *
- * Drop-in replacement for the legacy `Renderer` in src/PotreeRenderer.js: same `render()` and
+ * Replaced Potree's own raw-WebGL `Renderer` (src/PotreeRenderer.js, removed) with the same `render()` and
  * `renderOctree()` signatures and the same parameters, so the frame renderers (default, EDL, HQ),
  * the profile window, picking and shadow maps keep calling it unchanged. What the legacy renderer
  * did and how each part maps to three.js is described in docs/rendering.md.
@@ -210,6 +210,7 @@ export class PointCloudRenderer {
 				fragmentShader: "",
 			});
 			rm.name = "PointCloudRenderer";
+			rm.glslVersion = THREE.GLSL3; // src/materials/shaders/pointcloud.* are GLSL ES 3.0
 			rm.premultipliedAlpha = false;
 			this.renderMaterials.set(material, rm);
 		}
@@ -217,7 +218,7 @@ export class PointCloudRenderer {
 		return rm;
 	}
 
-	/** Same source and #defines the legacy renderer built (src/PotreeRenderer.js renderOctree). */
+	/** Same source and #defines the legacy renderer built (renderOctree in the removed src/PotreeRenderer.js, see git history and docs/rendering.md). */
 	updateShader(rm, material, octree, shadowMaps, params) {
 		let [vs, fs] = [material.vertexShader, material.fragmentShader];
 
@@ -689,18 +690,6 @@ function glBlendFactorToThree(glFactor) {
 		throw new Error(`PointCloudRenderer: unsupported blend factor ${glFactor}`);
 	}
 	return factor;
-}
-
-/**
- * Point cloud renderer for a WebGLRenderer. Temporary switch while both renderers exist (step 5 of
- * MIGRATION_PLAN.md): set `Potree.pointCloudRenderer = "legacy"` before creating the viewer to use the
- * old raw-WebGL renderer for comparison. Default: "three".
- */
-export function createPointCloudRenderer(threeRenderer, LegacyRenderer) {
-	let type = (typeof Potree !== "undefined" && Potree.pointCloudRenderer)
-		|| globalThis.POTREE_POINT_CLOUD_RENDERER // set by tests/visual/run.mjs --legacy-renderer
-		|| "three";
-	return type === "legacy" ? new LegacyRenderer(threeRenderer) : new PointCloudRenderer(threeRenderer);
 }
 
 function setUniform(uniforms, name, value) {

@@ -320,6 +320,15 @@ Vite: rollup уже есть, воркеры и ресурсы из gulp пер�
 
 **J. VR/WebXR — УДАЛЁН (решение владельца, 2026‑10‑12):** не нужен; снимает риски XR‑изменений three (r162, r169, r187) и пункт VR из Этапа 3.
 
+**K. Удаление компонентов (2026‑10‑12).**
+- ПРИНЯТО удалить: мёртвый код (`DEMWorker`, `InterleavedBuffer`, `BitReader`, `BlurMaterial`,
+  шейдеры `pointcloud_dynamic.*`/`pointcloud_sm.*`, `GeoControls`, `src/server/getPoints.php`,
+  `libs/MeshLine`), Cesium (примеры + `libs/Cesium`), Arena4D (`.vpc`), `DeviceOrientationControls`.
+- ОСТАВЛЕНО: мини‑карта OpenLayers.
+- ПОД ВОПРОСОМ (не удалять без отдельного решения): ориентированные снимки, 360° панорамы,
+  GeoPackage/Shapefile, экспорт DXF/GeoJSON, HQ splats, переводы интерфейса (i18n), узлы LAS/LAZ
+  формата Potree 1.x.
+
 **H. Язык — ПРИНЯТО:** JS + JSDoc, без перевода Potree на TypeScript; `.d.ts` генерировать для пользователей npm.
 
 ## 9. Эталон — сводка

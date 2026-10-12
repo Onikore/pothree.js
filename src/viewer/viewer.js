@@ -1,8 +1,7 @@
 
 import * as THREE from "three";
 import {ClipTask, ClipMethod, CameraMode, LengthUnits, ElevationGradientRepeat} from "../defines.js";
-import {Renderer} from "../PotreeRenderer.js";
-import {createPointCloudRenderer} from "../rendering/PointCloudRenderer.js";
+import {PointCloudRenderer} from "../rendering/PointCloudRenderer.js";
 import {PotreeRenderer} from "./PotreeRenderer.js";
 import {EDLRenderer} from "./EDLRenderer.js";
 import {HQSplatRenderer} from "./HQSplatRenderer.js";
@@ -213,7 +212,7 @@ export class Viewer extends EventDispatcher{
 			);
 		}
 		
-		this.pRenderer = createPointCloudRenderer(this.renderer, Renderer);
+		this.pRenderer = new PointCloudRenderer(this.renderer);
 		
 		{
 			let near = 2.5;
@@ -1365,7 +1364,11 @@ export class Viewer extends EventDispatcher{
 
 		let canvas = document.createElement("canvas");
 
-		let context = canvas.getContext('webgl', contextAttributes );
+		// WebGL2 only: three.js r163+ has no WebGL1 renderer, the shaders are GLSL ES 3.0
+		let context = canvas.getContext('webgl2', contextAttributes );
+		if (!context) {
+			throw new Error("Potree requires WebGL 2");
+		}
 
 		this.renderer = new THREE.WebGLRenderer({
 			alpha: true, 
@@ -1384,22 +1387,11 @@ export class Viewer extends EventDispatcher{
 		});
 		//this.renderer.domElement.focus();
 
-		// NOTE: If extension errors occur, pass the string into this.renderer.extensions.get(x) before enabling
-		// enable frag_depth extension for the interpolation shader, if available
+		// In WebGL2 frag depth, depth textures and VAOs are core (WebGL1 needed extensions for them).
+		// Rendering into float textures (EDL and HQ splat render targets) still needs an extension.
 		let gl = this.renderer.getContext();
-		gl.getExtension('EXT_frag_depth');
-		gl.getExtension('WEBGL_depth_texture');
-		gl.getExtension('WEBGL_color_buffer_float'); 	// Enable explicitly for more portability, EXT_color_buffer_float is the proper name in WebGL 2
-		
-		if(gl.createVertexArray == null){
-			let extVAO = gl.getExtension('OES_vertex_array_object');
-
-			if(!extVAO){
-				throw new Error("OES_vertex_array_object extension not supported");
-			}
-
-			gl.createVertexArray = extVAO.createVertexArrayOES.bind(extVAO);
-			gl.bindVertexArray = extVAO.bindVertexArrayOES.bind(extVAO);
+		if (!gl.getExtension('EXT_color_buffer_float')) {
+			console.warn("Potree: EXT_color_buffer_float not supported, eye-dome lighting and HQ splats will not work");
 		}
 		
 	}

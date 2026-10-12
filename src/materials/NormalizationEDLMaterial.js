@@ -7,6 +7,7 @@ export class NormalizationEDLMaterial extends THREE.RawShaderMaterial{
 
 	constructor(parameters = {}){
 		super();
+		this.glslVersion = THREE.GLSL3; // shaders are GLSL ES 3.0 (WebGL2)
 
 		let uniforms = {
 			screenWidth:    { type: 'f',   value: 0 },

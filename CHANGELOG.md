@@ -30,7 +30,10 @@
   Potree выключает его в своей копии three при загрузке. Если страница импортирует **свою** копию
   three (как все примеры), выключите и в ней, сразу после импорта:
   `THREE.ColorManagement.enabled = false;` — иначе цвета ваших объектов будут темнее.
-- Поддержка WebGL1 будет прекращена (three.js r163+ её не имеет). Пока ещё работает.
+- **Нужен WebGL2.** Вьюер создаёт контекст WebGL2 (three.js r163+ не поддерживает WebGL1), шейдеры
+  облаков и постобработки переведены на GLSL ES 3.0. EDL и HQ-сплатам нужно расширение
+  `EXT_color_buffer_float`. Собственный WebGL-рендерер облаков `Potree.Renderer` удалён, вместо него
+  `Potree.PointCloudRenderer` с тем же `render()`/`renderOctree()`.
 
 ### Исправлено
 
@@ -62,8 +65,7 @@
 
 - Облака точек рисует three.js (`Potree.PointCloudRenderer`, `src/rendering/PointCloudRenderer.js`):
   `THREE.Points` + `RawShaderMaterial`, без собственного WebGL-рендерера и приватного API three.
-  Картинка совпадает с оригиналом попиксельно. Временно можно вернуть старый рендерер:
-  `Potree.pointCloudRenderer = "legacy"` до создания вьюера.
+  Картинка совпадает с оригиналом попиксельно.
 
 - Визуальный регресс всех примеров и smoke-тест форматов: `node tests/visual/run.mjs`
   (`docs/testing.md`), эталонные скриншоты исходного кода в `tests/visual/baseline/`.

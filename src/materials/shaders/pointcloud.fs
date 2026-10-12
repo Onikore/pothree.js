@@ -1,10 +1,7 @@
-
-#if defined paraboloid_point_shape
-	#extension GL_EXT_frag_depth : enable
-#endif
-
 precision highp float;
 precision highp int;
+
+out highp vec4 out_FragColor;
 
 uniform mat4 viewMatrix;
 uniform mat4 uViewInv;
@@ -25,19 +22,19 @@ uniform float uPCIndex;
 uniform float uScreenWidth;
 uniform float uScreenHeight;
 
-varying vec3	vColor;
-varying float	vLogDepth;
-varying vec3	vViewPosition;
-varying float	vRadius;
-varying float 	vPointSize;
-varying vec3 	vPosition;
+in vec3	vColor;
+in float	vLogDepth;
+in vec3	vViewPosition;
+in float	vRadius;
+in float 	vPointSize;
+in vec3 	vPosition;
 
 
 float specularStrength = 1.0;
 
 void main() {
 
-	// gl_FragColor = vec4(vColor, 1.0);
+	// out_FragColor = vec4(vColor, 1.0);
 
 	vec3 color = vColor;
 	float depth = gl_FragCoord.z;
@@ -55,9 +52,9 @@ void main() {
 	#endif
 		
 	#if defined color_type_indices
-		gl_FragColor = vec4(color, uPCIndex / 255.0);
+		out_FragColor = vec4(color, uPCIndex / 255.0);
 	#else
-		gl_FragColor = vec4(color, uOpacity);
+		out_FragColor = vec4(color, uOpacity);
 	#endif
 
 	#if defined paraboloid_point_shape
@@ -69,7 +66,7 @@ void main() {
 		pos = pos / pos.w;
 		float expDepth = pos.z;
 		depth = (pos.z + 1.0) / 2.0;
-		gl_FragDepthEXT = depth;
+		gl_FragDepth = depth;
 		
 		#if defined(color_type_depth)
 			color.r = linearDepth;
@@ -77,12 +74,12 @@ void main() {
 		#endif
 		
 		#if defined(use_edl)
-			gl_FragColor.a = log2(linearDepth);
+			out_FragColor.a = log2(linearDepth);
 		#endif
 		
 	#else
 		#if defined(use_edl)
-			gl_FragColor.a = vLogDepth;
+			out_FragColor.a = vLogDepth;
 		#endif
 	#endif
 
@@ -91,11 +88,11 @@ void main() {
 		float weight = max(0.0, 1.0 - distance);
 		weight = pow(weight, 1.5);
 
-		gl_FragColor.a = weight;
-		gl_FragColor.xyz = gl_FragColor.xyz * weight;
+		out_FragColor.a = weight;
+		out_FragColor.xyz = out_FragColor.xyz * weight;
 	#endif
 
-	//gl_FragColor = vec4(0.0, 0.7, 0.0, 1.0);
+	//out_FragColor = vec4(0.0, 0.7, 0.0, 1.0);
 	
 }
 

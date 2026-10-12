@@ -18,7 +18,6 @@ export * from "./arena4d/PointCloudArena4D.js";
 export * from "./arena4d/PointCloudArena4DGeometry.js";
 export * from "./Points.js";
 export * from "./Potree_update_visibility.js";
-export * from "./PotreeRenderer.js";
 export * from "./rendering/PointCloudRenderer.js";
 export * from "./ProfileRequest.js";
 export * from "./TextSprite.js";

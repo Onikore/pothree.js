@@ -7,6 +7,7 @@ Potree.BlurMaterial = class BlurMaterial extends THREE.ShaderMaterial{
 
 	constructor(parameters = {}){
 		super();
+		this.glslVersion = THREE.GLSL3; // shaders are GLSL ES 3.0 (WebGL2)
 
 		let uniforms = {
 			near: { type: 'f', value: 0 },

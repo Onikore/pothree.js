@@ -4,8 +4,8 @@
 `Renderer`) и **как каждая его часть перенесена** на штатные средства three.js
 (`src/rendering/PointCloudRenderer.js`, шаг 5 миграции, `MIGRATION_PLAN.md` раздел 6.1).
 
-Сейчас по умолчанию работает новый рендерер. Старый оставлен для сравнения до проверки паритета:
-`Potree.pointCloudRenderer = "legacy"` до создания `Potree.Viewer`.
+Старый рендерер удалён (шаг 5b) после проверки попиксельного паритета и производительности
+(`PERFORMANCE.md`); его описание ниже оставлено как спецификация того, что воспроизводит новый.
 
 ## Как вызывается
 
@@ -104,5 +104,7 @@
 | `onBeforeRenderNode` | uniforms узла (`uLevel`, `uVNStart`, `uPCIndex`, `uNodeSpacing`, `uDebug`, clip-полигоны, тени, GPS time), псевдонимы атрибутов, `uniformsNeedUpdate` |
 | `updateAttributeAliases` | один раз на геометрию: `rgba`→`color`, `return number`→`returnNumber` и т.д. (тот же `BufferAttribute`); `aExtra` — на активный «дополнительный» атрибут |
 
-Пока шейдеры GLSL ES 1.0 и контекст WebGL1 — как у старого рендерера (подшаг 5a): меняется только
-то, кто рисует. Перевод на WebGL2/GLSL3 — подшаг 5b.
+Контекст — WebGL2, шейдеры `src/materials/shaders/*` — GLSL ES 3.0 (`glslVersion: THREE.GLSL3`;
+`#version 300 es` добавляет three). Перевод механический: `attribute`→`in`, `varying`→`out`/`in`,
+`texture2D`→`texture`, `gl_FragColor`→`out_FragColor`, `gl_FragDepthEXT`→`gl_FragDepth`,
+`#extension GL_EXT_frag_depth` убран.

@@ -15,13 +15,13 @@
 | `PointCloudOctree.js` | 1153 | облако в сцене: узлы (`toTreeNode`), текстура видимых узлов, picking (`pick`), профиль, `getPointsInBox`, bbox, `find` |
 | `PointCloudOctreeGeometry.js` | 269 | геометрия Potree 1.x: узел, URL узла, загрузка иерархии и точек |
 | `PointCloudEptGeometry.js` | 319 | геометрия EPT: ключи узлов, иерархия EPT |
-| `rendering/PointCloudRenderer.js` | — | отрисовка облаков средствами three.js (замена `PotreeRenderer.js`), `createPointCloudRenderer` — временный переключатель на старый; см. `docs/rendering.md` |
-| `PotreeRenderer.js` | 1483 | **WebGL**, старый рендерер (будет удалён после паритета). Собственный рендерер облаков: шейдеры, VBO/VAO, uniforms, текстуры, `drawArrays` |
+| `rendering/PointCloudRenderer.js` | ~590 | отрисовка облаков средствами three.js (заменил удалённый `PotreeRenderer.js`); см. `docs/rendering.md` |
+| ~~`PotreeRenderer.js`~~ | 1483 | удалён в шаге 5b: собственный WebGL-рендерер облаков (шейдеры, VBO/VAO, uniforms, текстуры, `drawArrays`) |
 | `ProfileRequest.js` | 392 | `ProfileData`, `ProfileRequest` — асинхронный сбор точек вдоль полосы профиля |
 | `LRU.js` | 173 | LRU узлов; `freeMemory()` выгружает узлы сверх `pointLoadLimit` |
 | `WorkerPool.js` | 27 | пул воркеров по URL скрипта |
 | `XHRFactory.js` | 31 | создание `XMLHttpRequest` с `withCredentials` и своими заголовками |
-| `Features.js` | 78 | **WebGL**. Проверка расширений WebGL1 (`SHADER_EDL`, `SHADER_INTERPOLATION`, …) |
+| `Features.js` | 40 | что поддерживает WebGL2 браузера сверх базового (`SHADER_EDL`, `SHADER_SPLATS` — float render targets) |
 | `defines.js` | 55 | перечисления: `PointSizeType`, `PointShape`, `ClipTask`, `ClipMethod`, `CameraMode`, `LengthUnits`, `MOUSE`, `TreeType`, `ElevationGradientRepeat` |
 | `Enum.js` | 43 | класс `Enum` (используется в `utils/GeoTIFF.js`) |
 | `EventDispatcher.js` | 98 | события (`addEventListener`, `dispatchEvent`, `removeEventListeners`) |

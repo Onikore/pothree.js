@@ -7,8 +7,7 @@ import {CSVExporter} from "../exporter/CSVExporter.js";
 import {LASExporter} from "../exporter/LASExporter.js";
 import { EventDispatcher } from "../EventDispatcher.js";
 import {PointCloudTree} from "../PointCloudTree.js";
-import {Renderer} from "../PotreeRenderer.js";
-import {createPointCloudRenderer} from "../rendering/PointCloudRenderer.js";
+import {PointCloudRenderer} from "../rendering/PointCloudRenderer.js";
 import {PointCloudMaterial} from "../materials/PointCloudMaterial.js";
 import {PointSizeType} from "../defines.js";
 
@@ -283,7 +282,7 @@ export class ProfileWindow extends EventDispatcher {
 		this.initSVG();
 		this.initListeners();
 
-		this.pRenderer = createPointCloudRenderer(this.renderer, Renderer);
+		this.pRenderer = new PointCloudRenderer(this.renderer);
 
 		this.elRoot.i18n();
 	}
@@ -662,22 +661,6 @@ export class ProfileWindow extends EventDispatcher {
 		$(this.renderer.domElement).css('width', '100%');
 		$(this.renderer.domElement).css('height', '100%');
 
-
-		{
-			let gl = this.renderer.getContext();
-
-			if(gl.createVertexArray == null){
-				let extVAO = gl.getExtension('OES_vertex_array_object');
-
-				if(!extVAO){
-					throw new Error("OES_vertex_array_object extension not supported");
-				}
-
-				gl.createVertexArray = extVAO.createVertexArrayOES.bind(extVAO);
-				gl.bindVertexArray = extVAO.bindVertexArrayOES.bind(extVAO);
-			}
-			
-		}
 
 		this.camera = new THREE.OrthographicCamera(-1000, 1000, 1000, -1000, -1000, 1000);
 		this.camera.up.set(0, 0, 1);
