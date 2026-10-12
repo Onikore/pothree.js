@@ -30,6 +30,17 @@ function copyMaterial(source, target){
 }
 
 
+/**
+ * Uploads only the points added to a batch since the last upload. `range` is in points; three's
+ * update ranges are in array elements, hence * itemSize. (Before three r159 this set
+ * attribute.updateRange in points, which the legacy renderer ignored - it re-uploaded everything.)
+ */
+function markRangeForUpload(attribute, range) {
+	attribute.clearUpdateRanges();
+	attribute.addUpdateRange(range.start * attribute.itemSize, range.count * attribute.itemSize);
+	attribute.needsUpdate = true;
+}
+
 class Batch{
 
 	constructor(geometry, material){
@@ -110,9 +121,7 @@ class ProfileFakeOctree extends PointCloudTree{
 
 				for(let key of Object.keys(this.currentBatch.geometry.attributes)){
 					let attribute = this.currentBatch.geometry.attributes[key];
-					attribute.updateRange.offset = updateRange.start;
-					attribute.updateRange.count = updateRange.count;
-					attribute.needsUpdate = true;
+					markRangeForUpload(attribute, updateRange);
 				}
 
 				this.currentBatch.geometry.computeBoundingBox();
@@ -164,9 +173,7 @@ class ProfileFakeOctree extends PointCloudTree{
 
 		for(let key of Object.keys(this.currentBatch.geometry.attributes)){
 			let attribute = this.currentBatch.geometry.attributes[key];
-			attribute.updateRange.offset = updateRange.start;
-			attribute.updateRange.count = updateRange.count;
-			attribute.needsUpdate = true;
+			markRangeForUpload(attribute, updateRange);
 		}
 
 		data.projectedBox = projectedBox;

@@ -1367,6 +1367,9 @@ export class Viewer extends EventDispatcher{
 			premultipliedAlpha: false,
 			canvas: canvas,
 			context: context});
+		// three r155 switched to physically based light intensities; keep the r124 look for meshes
+		// until the step to r186 (where this flag no longer exists), see MIGRATION_PLAN.md step 7
+		this.renderer.useLegacyLights = true;
 		this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // keep r124 colors, see src/threeSetup.js
 		this.renderer.sortObjects = false;
 		this.renderer.setSize(width, height);
