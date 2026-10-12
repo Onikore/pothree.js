@@ -305,6 +305,15 @@ export class Viewer extends EventDispatcher{
 
 		this.renderer.setAnimationLoop(this.loop.bind(this));
 
+		// Render on demand (off by default = draw every frame, as the original). When on, the loop
+		// skips update+render while nothing changes: no input, camera still, no nodes loading, no
+		// tweens. Code that changes the scene without user input calls viewer.requestRender().
+		this.renderOnDemand = false;
+		this._framesToRender = 0;
+		this._lastFrameSignature = null;
+		for (const type of ["pointerdown", "pointermove", "pointerup", "wheel", "keydown", "keyup", "input", "change", "resize"]) {
+			window.addEventListener(type, () => this.requestRender(), {capture: true, passive: true});
+		}
 
 		this.loadGUI = this.loadGUI.bind(this);
 
@@ -2004,6 +2013,48 @@ export class Viewer extends EventDispatcher{
 		}
 	}
 
+	/** Render on demand: draw the next frames even if nothing seems to change (scene edited from code). */
+	requestRender(){
+		this._framesToRender = Math.max(this._framesToRender, Viewer.SETTLE_FRAMES);
+	}
+
+	_needsFrame(){
+		if(this._framesToRender > 0 || state.numNodesLoading > 0
+			|| (typeof TWEEN !== "undefined" && TWEEN.getAll().length > 0)){
+			return true;
+		}
+		// changes made from code between frames: view moved (the camera follows it in update()),
+		// point clouds or other objects added or removed
+		const scene = this.scene;
+		const view = scene.view;
+		const idle = [view.position.x, view.position.y, view.position.z, view.yaw, view.pitch, view.radius,
+			scene.pointclouds.length, scene.scene.children.length, scene.scenePointCloud.children.length,
+			scene.annotations.children.length, scene.measurements.length, scene.volumes.length, scene.profiles.length].join(",");
+		if(idle !== this._lastIdleSignature){
+			this._lastIdleSignature = idle;
+			this.requestRender();
+			return true;
+		}
+		return false;
+	}
+
+	// Keeps drawing while the camera, the drawn nodes or the canvas size change (controls coast after
+	// input, loaded nodes are added a few per frame), then SETTLE_FRAMES more and stops.
+	_afterFrame(){
+		const camera = this.scene.getActiveCamera();
+		let nodes = 0;
+		for(const pc of this.scene.pointclouds) nodes += pc.visibleNodes.length;
+		const size = this.renderer.getSize(this._sizeTmp ??= new THREE.Vector2());
+		const signature = [...camera.matrixWorld.elements, ...camera.projectionMatrix.elements,
+			nodes, size.x, size.y].join(",");
+		if(signature !== this._lastFrameSignature){
+			this._lastFrameSignature = signature;
+			this.requestRender();
+		}else if(this._framesToRender > 0){
+			this._framesToRender--;
+		}
+	}
+
 	loop(timestamp){
 
 		if(this.stats){
@@ -2015,8 +2066,13 @@ export class Viewer extends EventDispatcher{
 		}
 
 		this.clock.update(timestamp);
+		if(this.renderOnDemand && !this._needsFrame()){
+			if(this.stats) this.stats.end();
+			return;
+		}
 		this.update(this.clock.getDelta(), timestamp);
 		this.render();
+		if(this.renderOnDemand) this._afterFrame();
 
 
 		// 	this.update(this.clock.getDelta(), timestamp);
@@ -2081,3 +2137,6 @@ export class Viewer extends EventDispatcher{
 		return message;
 	}
 };
+
+/** Render on demand: frames drawn after the last change (camera coasting, nodes being added). */
+Viewer.SETTLE_FRAMES = 10;

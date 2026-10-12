@@ -46,6 +46,7 @@ npm run build
 node tests/visual/run.mjs --jobs 2            # визуальный регресс, эталон = исходный код; 41 пример + 5 пропусков
 node tests/visual/run.mjs --only lion,potree2
 node tests/visual/pick.mjs                     # picking, 5 примеров × 25 позиций
+node tests/visual/ondemand.mjs                 # рендер по требованию (viewer.renderOnDemand)
 GL=nvidia BUDGET=10000000 node tests/perf/bench.mjs ca13 300   # отрисовка облаков (UNCAPPED, SCISSOR, LOAD_TIMEOUT)
 GL=nvidia node tests/perf/frame.mjs ca13 20    # профиль кадра (FREEZE, ANNOTATIONS, UNCAPPED)
 GL=nvidia node tests/perf/load.mjs ca13 8      # скорость загрузки
@@ -93,8 +94,6 @@ README в каждом коммите), коммитить и пушить ка�
 
 ## Что ещё можно оптимизировать (не сделано)
 
-- **Рендер по требованию**: Potree рисует 60 кадров/с даже когда ничего не меняется — лишний нагрев/батарея.
-  Режим «рисовать только при изменении камеры/сцены/загрузке» (опция).
 - Накладные расходы three на объект (~4 мкс/узел: `bindingStates.needsUpdate/setup`, VAO, матрицы) —
   заметны на 2 000+ узлах; путь — меньше узлов/объединение, либо WebGPU позже.
 - Редкие фризы (1% low ~1,8 FPS на 35M) — у обеих версий, причина не исследована.
