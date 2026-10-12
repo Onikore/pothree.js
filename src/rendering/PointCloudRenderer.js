@@ -276,6 +276,14 @@ export class PointCloudRenderer {
 
 		let definesString = defines.join("\n");
 
+		// The shader source is ~40 KB: only rebuild/compare it when its inputs changed
+		if (rm.userData.sourceVS === vs && rm.userData.sourceFS === fs && rm.userData.defines === definesString) {
+			return;
+		}
+		rm.userData.sourceVS = vs;
+		rm.userData.sourceFS = fs;
+		rm.userData.defines = definesString;
+
 		let insert = (src) => src.indexOf("#version ") >= 0
 			? src.replace(/(#version .*)/, `$1\n${definesString}`)
 			: `${definesString}\n${src}`;

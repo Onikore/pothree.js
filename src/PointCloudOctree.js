@@ -465,7 +465,8 @@ export class PointCloudOctree extends PointCloudTree {
 		}
 
 		while (stack.length > 0) {
-			let object = stack.shift();
+			// pop, not shift: order does not matter for hiding, and shift() is O(n) per call
+			let object = stack.pop();
 
 			object.visible = false;
 
