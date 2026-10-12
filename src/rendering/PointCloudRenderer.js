@@ -31,6 +31,9 @@ export class PointCloudRenderer {
 		/** PointCloudMaterial -> internal RawShaderMaterial */
 		this.renderMaterials = new WeakMap();
 
+		/** node BufferGeometry -> geometry three draws (same BufferAttributes, shader names) */
+		this.renderGeometries = new WeakMap();
+
 		// render() and renderOctree() are not re-entrant; the node hook reads this state
 		this.state = null;
 
@@ -136,9 +139,10 @@ export class PointCloudRenderer {
 		let saved = [];
 		for (let node of touched) {
 			let sceneNode = node.sceneNode;
-			saved.push([sceneNode, sceneNode.visible, sceneNode.material, sceneNode.onBeforeRender]);
+			saved.push([sceneNode, sceneNode.visible, sceneNode.material, sceneNode.onBeforeRender, sceneNode.geometry]);
 			sceneNode.visible = indices.has(node);
 			sceneNode.material = rm;
+			sceneNode.geometry = this.getRenderGeometry(sceneNode.geometry);
 			sceneNode.onBeforeRender = this.nodeHook;
 			sceneNode.userData.potreeNode = node;
 		}
@@ -149,10 +153,11 @@ export class PointCloudRenderer {
 		renderer.render(octree, camera);
 
 		renderer.autoClear = autoClear;
-		for (let [sceneNode, visible, mat, hook] of saved) {
+		for (let [sceneNode, visible, mat, hook, geometry] of saved) {
 			sceneNode.visible = visible;
 			sceneNode.material = mat;
 			sceneNode.onBeforeRender = hook;
+			sceneNode.geometry = geometry;
 		}
 		this.state = null;
 	}
@@ -499,21 +504,55 @@ export class PointCloudRenderer {
 	}
 
 	/**
-	 * Gives the geometry's attributes the names the shader uses, pointing at the same
-	 * BufferAttribute objects (three uploads each attribute once, per object, not per name).
-	 * Legacy mapping: attributeLocations in src/PotreeRenderer.js.
+	 * The geometry three draws for a node: a BufferGeometry that shares the node's BufferAttribute
+	 * objects under the names the shader uses (`rgba` -> `color`, `return number` -> `returnNumber`,
+	 * ...; legacy mapping: attributeLocations of the removed src/PotreeRenderer.js). three uploads
+	 * buffers per attribute object, so nothing is uploaded twice. The node's own geometry is not
+	 * changed: Potree code (profile, exporters, point queries) iterates its attributes.
+	 */
+	getRenderGeometry(geometry) {
+		let rg = this.renderGeometries.get(geometry);
+		let names = Object.keys(geometry.attributes);
+
+		if (!rg || rg.userData.sourceAttributeCount !== names.length) {
+			if (rg) {
+				rg.dispose();
+			} else {
+				// free three's per-geometry state (VAOs) together with the node's geometry
+				geometry.addEventListener("dispose", () => {
+					let r = this.renderGeometries.get(geometry);
+					if (r) {
+						r.dispose();
+						this.renderGeometries.delete(geometry);
+					}
+				});
+			}
+
+			rg = new THREE.BufferGeometry();
+			for (let name of names) {
+				rg.setAttribute(name, geometry.attributes[name]);
+			}
+			for (let [from, to] of ATTRIBUTE_ALIASES) {
+				if (geometry.attributes[from] && !geometry.attributes[to]) {
+					rg.setAttribute(to, geometry.attributes[from]);
+				}
+			}
+			rg.userData.sourceAttributeCount = names.length;
+			rg.userData.source = geometry;
+			this.renderGeometries.set(geometry, rg);
+		}
+
+		rg.drawRange = geometry.drawRange; // profile batches grow their draw range
+
+		return rg;
+	}
+
+	/**
+	 * Points `aExtra` of the render geometry at the active "extra" attribute (one without a fixed
+	 * shader name) and sets its scale/offset uniforms, as the legacy renderer did per node.
 	 */
 	updateAttributeAliases(geometry, octree, material, set) {
 		let a = geometry.attributes;
-
-		if (!geometry.userData.potreeAliases) {
-			for (let [from, to] of ATTRIBUTE_ALIASES) {
-				if (a[from] && !a[to]) {
-					geometry.setAttribute(to, a[from]);
-				}
-			}
-			geometry.userData.potreeAliases = true;
-		}
 
 		let name = material.activeAttributeName;
 		let isExtraAttribute = SHADER_ATTRIBUTE_NAMES[name] === undefined && a[name] !== undefined;
