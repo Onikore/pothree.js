@@ -133,7 +133,8 @@ export class MeasuringTool extends EventDispatcher{
 		this.showLabels = true;
 		this.scene = new THREE.Scene();
 		this.scene.name = 'scene_measurement';
-		this.light = new THREE.PointLight(0xffffff, 1.0);
+		// three r155+ lights are physically based: x PI (and decay 0 for point lights) gives the r124 "legacy" intensity
+		this.light = new THREE.PointLight(0xffffff, Math.PI, 0, 0);
 		this.scene.add(this.light);
 
 		this.viewer.inputHandler.registerInteractiveScene(this.scene);

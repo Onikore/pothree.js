@@ -363,12 +363,13 @@ export class Scene extends EventDispatcher{
 		//this.camera.rotation.x = -Math.PI / 6;
 		this.cameraScreenSpace.lookAt(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, 1, 0));
 		
-		this.directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 );
+		// three r155+ lights are physically based: x PI (and decay 0 for point lights) gives the r124 "legacy" intensity
+		this.directionalLight = new THREE.DirectionalLight( 0xffffff, 0.5 * Math.PI );
 		this.directionalLight.position.set( 10, 10, 10 );
 		this.directionalLight.lookAt( new THREE.Vector3(0, 0, 0));
 		this.scenePointCloud.add( this.directionalLight );
 		
-		let light = new THREE.AmbientLight( 0x555555 ); // soft white light
+		let light = new THREE.AmbientLight( 0x555555, Math.PI ); // soft white light (x PI: see directionalLight)
 		this.scenePointCloud.add( light );
 
 		{ // background

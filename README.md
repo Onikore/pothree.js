@@ -4,12 +4,12 @@
 на актуальный three.js из npm. Функциональность и картинка должны совпадать с оригиналом; каждое
 отличие проверяется визуальными регресс-тестами.
 
-**Статус:** идёт миграция. Сейчас three.js **r163** (`three@0.163.0`), цель — r186.
+**Статус:** three.js **r186** (`three@0.186.1`, последняя стабильная), WebGL2. Дальше — ES-сборка и операции над облаком (`MIGRATION_PLAN.md`).
 Что изменилось — [CHANGELOG.md](CHANGELOG.md), план и решения — [MIGRATION_PLAN.md](MIGRATION_PLAN.md).
 
 | | |
 |---|---|
-| three.js | npm-пакет `three` (версия в `package.json`), не `libs/three.js` |
+| three.js | npm-пакет `three` r186, `peerDependency` (`^0.186.0`); в UMD-сборку вшит |
 | Сборка | rollup 4 → `build/potree/potree.js` (UMD, глобальный `Potree`, three.js внутри) |
 | Примеры | `examples/*.html`, three.js подключается через import map из `node_modules` |
 | VR/WebXR | удалён |

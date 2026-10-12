@@ -86,6 +86,7 @@ class ProfileFakeOctree extends PointCloudTree{
 	}
 
 	dispose(){
+		super.dispose(); // three r186: Object3D has dispose() (dispatches the 'dispose' event)
 		for(let node of this.visibleNodes){
 			node.geometry.dispose();
 		}

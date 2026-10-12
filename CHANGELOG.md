@@ -5,7 +5,7 @@
 
 ## Не выпущено — ветка `three-upgrade`
 
-Идёт миграция на актуальный three.js. Сейчас three.js r163 (`three@0.163.0`), цель — r186.
+three.js r186 (`three@0.186.1`) — последняя стабильная версия на 2026‑10‑12.
 
 ### Ломающие изменения
 
@@ -25,6 +25,11 @@
 - **VR/WebXR удалён.** Больше нет `Potree.VRControls`, кнопки VR, `viewer.vrControls`,
   `viewer.sceneVR`, `viewer.renderVR()`, `scene.cameraVR`, `CameraMode.VR` и событий вьюера
   `vr_start`/`vr_end`. Примеры `vr_*.html` — обычные страницы с данными Potree 2.0 с potree.org.
+- **Свет**: в three r155+ интенсивности физические. Свет Potree (`scene.directionalLight`, ambient,
+  свет инструментов) пересчитан (× π, у точечных `decay = 0`) — картинка мешей прежняя. **Свои источники
+  света умножьте на `Math.PI`** (у Point/SpotLight с `distance = 0` ещё `decay = 0`), иначе меши
+  будут темнее.
+- `three` — `peerDependency` (`^0.186.0`): для сборки своего проекта ставьте `three` сами.
 - **Управление цветом three.js выключено** (`THREE.ColorManagement.enabled = false`, вывод
   `LinearSRGBColorSpace`), чтобы цвета совпадали с оригиналом (three r124 цветом не управлял).
   Potree выключает его в своей копии three при загрузке. Если страница импортирует **свою** копию

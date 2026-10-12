@@ -196,3 +196,4 @@ clipping (box, polygon, sphere, plane). Фрагментный — форму т
 | 4 | three r151 → r152. Управление цветом выключено так, чтобы картинка совпадала с r124: `src/threeSetup.js` (импортируется первым в `src/Potree.js`) ставит `ColorManagement.enabled = false`; у рендереров вьюера и окна профиля `outputColorSpace = LinearSRGBColorSpace`; в примерах после импорта three — та же строка для их копии three. |
 | — | Удалены по решению K: Arena4D, `DeviceOrientationControls`, `GeoControls`, мёртвый код, интеграция Cesium. |
 | 7 (r163) | three r152 → r163: `useLegacyLights = true` (прежняя яркость мешей до r186), окно профиля — `addUpdateRange` в элементах массива; picking на 24-битной глубине (точнее, см. `docs/testing.md`). |
+| 7 (r186) | three r163 → r186: свет без `useLegacyLights` (интенсивности × π, `decay = 0`), `THREE.Timer` вместо устаревшего `Clock`, `super.dispose()` в `ProfileFakeOctree`, `three` — `peerDependency`. |

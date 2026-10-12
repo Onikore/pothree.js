@@ -173,7 +173,7 @@ export class Viewer extends EventDispatcher{
 		this.compass = null;
 		
 		this.skybox = null;
-		this.clock = new THREE.Clock();
+		this.clock = new THREE.Timer(); // THREE.Clock is deprecated since r183; Timer needs update(timestamp) per frame (see loop)
 		this.background = null;
 
 		this.initThree();
@@ -1367,9 +1367,6 @@ export class Viewer extends EventDispatcher{
 			premultipliedAlpha: false,
 			canvas: canvas,
 			context: context});
-		// three r155 switched to physically based light intensities; keep the r124 look for meshes
-		// until the step to r186 (where this flag no longer exists), see MIGRATION_PLAN.md step 7
-		this.renderer.useLegacyLights = true;
 		this.renderer.outputColorSpace = THREE.LinearSRGBColorSpace; // keep r124 colors, see src/threeSetup.js
 		this.renderer.sortObjects = false;
 		this.renderer.setSize(width, height);
@@ -1998,6 +1995,7 @@ export class Viewer extends EventDispatcher{
 			performance.mark("loop-start");
 		}
 
+		this.clock.update(timestamp);
 		this.update(this.clock.getDelta(), timestamp);
 		this.render();
 
