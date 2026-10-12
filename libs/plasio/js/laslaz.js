@@ -206,8 +206,8 @@
 	var LAZLoader = function(arraybuffer) {
 		this.arraybuffer = arraybuffer;
 		
-		let workerPath = Potree.scriptPath + "/workers/LASLAZWorker.js";
-		this.ww = Potree.workerPool.getWorker(workerPath);
+		let workerPath = LASFile.potree.scriptPath + "/workers/LASLAZWorker.js";
+		this.ww = LASFile.potree.workerPool.getWorker(workerPath);
 
 		this.nextCB = null;
 		var o = this;
@@ -274,8 +274,8 @@
 
 		return new Promise(function(res, rej) {
 			o.dorr({type:'close'}, function(r) {
-				let workerPath = Potree.scriptPath + "/workers/LASLAZWorker.js";
-				Potree.workerPool.returnWorker(workerPath, o.ww);
+				let workerPath = LASFile.potree.scriptPath + "/workers/LASLAZWorker.js";
+				LASFile.potree.workerPool.returnWorker(workerPath, o.ww);
 			
 				if (r.status !== 1)
 					return rej(new Error("Failed to close file"));

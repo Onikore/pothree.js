@@ -1,6 +1,7 @@
 
 import * as THREE from "three";
 import {XHRFactory} from "../../XHRFactory.js";
+import {state} from "../../state.js";
 
 export class EptBinaryLoader {
 	extension() {
@@ -8,7 +9,7 @@ export class EptBinaryLoader {
 	}
 
 	workerPath() {
-		return Potree.scriptPath + '/workers/EptBinaryDecoderWorker.js';
+		return state.scriptPath + '/workers/EptBinaryDecoderWorker.js';
 	}
 
 	load(node) {
@@ -43,7 +44,7 @@ export class EptBinaryLoader {
 
 	parse(node, buffer) {
 		let workerPath = this.workerPath();
-		let worker = Potree.workerPool.getWorker(workerPath);
+		let worker = state.workerPool.getWorker(workerPath);
 
 		worker.onmessage = function(e) {
 			let g = new THREE.BufferGeometry();
@@ -98,7 +99,7 @@ export class EptBinaryLoader {
 					numPoints,
 					new THREE.Vector3(...e.data.mean));
 
-			Potree.workerPool.returnWorker(workerPath, worker);
+			state.workerPool.returnWorker(workerPath, worker);
 		};
 
 		// Same values the pre-COPC code passed (node.ept.eptScale/eptOffset, node.key.b.min):

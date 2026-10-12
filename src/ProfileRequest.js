@@ -1,6 +1,7 @@
 
 import * as THREE from "three";
 import {Points} from "./Points.js";
+import {state} from "./state.js";
 
 export class ProfileData {
 	constructor (profile) {
@@ -128,7 +129,7 @@ export class ProfileRequest {
 			if (node.loaded) {
 				// add points to result
 				intersectedNodes.push(node);
-				Potree.lru.touch(node);
+				state.lru.touch(node);
 				this.highestLevelServed = Math.max(node.getLevel(), this.highestLevelServed);
 
 				var geom = node.pcoGeometry;

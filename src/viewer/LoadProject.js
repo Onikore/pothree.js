@@ -5,6 +5,11 @@ import {Measure} from "../utils/Measure.js";
 import {CameraAnimation} from "../modules/CameraAnimation/CameraAnimation.js";
 import {Utils} from "../utils.js";
 import {PointSizeType} from "../defines.js";
+import {GeoPackageLoader} from "../loader/GeoPackageLoader.js";
+import {OrientedImageLoader} from "../modules/OrientedImages/OrientedImages.js";
+import {Profile} from "../utils/Profile.js";
+import {loadPointCloud as loadPointCloudFromUrl} from "../Potree.js";
+import {Volume, BoxVolume, SphereVolume} from "../utils/Volume.js";
 
 function loadPointCloud(viewer, data){
 
@@ -64,7 +69,7 @@ function loadPointCloud(viewer, data){
 			return;
 		}
 
-		Potree.loadPointCloud(data.url, data.name, (e) => {
+		loadPointCloudFromUrl(data.url, data.name, (e) => {
 			const {pointcloud} = e;
 
 			pointcloud.position.set(...data.position);
@@ -120,7 +125,10 @@ function loadVolume(viewer, data){
 		return;
 	}
 
-	let volume = new Potree[data.type];
+	// data.type is the class name written by SaveProject (volume.constructor.name); the original
+	// looked it up on the global Potree object, which the ES module build does not have
+	const VolumeClass = {Volume, BoxVolume, SphereVolume}[data.type];
+	let volume = new VolumeClass();
 
 	volume.uuid = data.uuid;
 	volume.name = data.name;
@@ -169,7 +177,7 @@ function loadOrientedImages(viewer, images){
 		return;
 	}
 
-	Potree.OrientedImageLoader.load(cameraParamsPath, imageParamsPath, viewer).then( images => {
+	OrientedImageLoader.load(cameraParamsPath, imageParamsPath, viewer).then( images => {
 		viewer.scene.addOrientedImages(images);
 	});
 
@@ -193,7 +201,7 @@ function loadGeopackage(viewer, geopackage){
 		transform: transform,
 	};
 
-	Potree.GeoPackageLoader.loadUrl(path, params).then(data => {
+	GeoPackageLoader.loadUrl(path, params).then(data => {
 		viewer.scene.addGeopackage(data);
 	});
 	
@@ -291,7 +299,7 @@ function loadProfile(viewer, data){
 		return;
 	}
 
-	let profile = new Potree.Profile();
+	let profile = new Profile();
 	profile.name = name;
 	profile.uuid = data.uuid;
 

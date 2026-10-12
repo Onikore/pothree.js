@@ -4,6 +4,7 @@ import * as THREE from "three";
 import {Action} from "./Actions.js";
 import {Utils} from "./utils.js";
 import {EventDispatcher} from "./EventDispatcher.js";
+import {state} from "./state.js";
 
 export class Annotation extends EventDispatcher {
 	constructor (args = {}) {
@@ -44,7 +45,7 @@ export class Annotation extends EventDispatcher {
 		this.parent = null;
 		this.boundingBox = new THREE.Box3();
 
-		let iconClose = Potree.resourcePath + '/icons/close.svg';
+		let iconClose = state.resourcePath + '/icons/close.svg';
 
 		this.domElement = $(`
 			<div class="annotation" oncontextmenu="return false;">

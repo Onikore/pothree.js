@@ -2,6 +2,7 @@
 import * as THREE from "three";
 import {ClipTask, ClipMethod} from "./defines.js";
 import {Box3Helper} from "./utils/Box3Helper.js";
+import {state} from "./state.js";
 
 export function updatePointClouds(pointclouds, camera, renderer){
 
@@ -27,7 +28,7 @@ export function updatePointClouds(pointclouds, camera, renderer){
 		pointcloud.updateVisibleBounds();
 	}
 
-	Potree.lru.freeMemory();
+	state.lru.freeMemory();
 
 	return result;
 };
@@ -158,10 +159,10 @@ export function updateVisibility(pointclouds, camera, renderer){
 
 	// check if pointcloud has been transformed
 	// some code will only be executed if changes have been detected
-	if(!Potree._pointcloudTransformVersion){
-		Potree._pointcloudTransformVersion = new Map();
+	if(!state._pointcloudTransformVersion){
+		state._pointcloudTransformVersion = new Map();
 	}
-	let pointcloudTransformVersion = Potree._pointcloudTransformVersion;
+	let pointcloudTransformVersion = state._pointcloudTransformVersion;
 	for(let pointcloud of pointclouds){
 
 		if(!pointcloud.visible){
@@ -219,7 +220,7 @@ export function updateVisibility(pointclouds, camera, renderer){
 		let maxLevel = pointcloud.maxLevel || Infinity;
 		let level = node.getLevel();
 		let visible = insideFrustum;
-		visible = visible && !(numVisiblePoints + node.getNumPoints() > Potree.pointBudget);
+		visible = visible && !(numVisiblePoints + node.getNumPoints() > state.pointBudget);
 		visible = visible && !(numVisiblePointsInPointclouds.get(pointcloud) + node.getNumPoints() > pointcloud.pointBudget);
 		visible = visible && level < maxLevel;
 		visible = visible || node.getLevel() <= 2;
@@ -282,7 +283,7 @@ export function updateVisibility(pointclouds, camera, renderer){
 			lowestSpacing = Math.min(lowestSpacing, node.geometryNode.spacing);
 		}
 
-		if (numVisiblePoints + node.getNumPoints() > Potree.pointBudget) {
+		if (numVisiblePoints + node.getNumPoints() > state.pointBudget) {
 			break;
 		}
 
@@ -310,7 +311,7 @@ export function updateVisibility(pointclouds, camera, renderer){
 		}
 
 		if (node.isTreeNode()) {
-			Potree.lru.touch(node.geometryNode);
+			state.lru.touch(node.geometryNode);
 			node.sceneNode.visible = true;
 
 			visibleNodes.push(node);
@@ -339,8 +340,8 @@ export function updateVisibility(pointclouds, camera, renderer){
 				node.boundingBoxNode.visible = false;
 			}
 
-			// if(node.boundingBoxNode !== undefined && Potree.debug.allowedNodes !== undefined){
-			// 	if(!Potree.debug.allowedNodes.includes(node.name)){
+			// if(node.boundingBoxNode !== undefined && state.debug.allowedNodes !== undefined){
+			// 	if(!state.debug.allowedNodes.includes(node.name)){
 			// 		node.boundingBoxNode.visible = false;
 			// 	}
 			// }
@@ -395,17 +396,10 @@ export function updateVisibility(pointclouds, camera, renderer){
 		}
 	}// end priority queue loop
 
-	{ // update DEM
-		let maxDEMLevel = 4;
-		let candidates = pointclouds
-			.filter(p => (p.generateDEM && p.dem instanceof Potree.DEM));
-		for (let pointcloud of candidates) {
-			let updatingNodes = pointcloud.visibleNodes.filter(n => n.getLevel() <= maxDEMLevel);
-			pointcloud.dem.update(updatingNodes);
-		}
-	}
+	// The original updated a DEM here (`p.dem instanceof Potree.DEM`), but no DEM class exists in
+	// this code base; with generateDEM enabled it threw. Removed in the fork (DEM support never shipped).
 
-	for (let i = 0; i < Math.min(Potree.maxNodesLoading, unloadedGeometry.length); i++) {
+	for (let i = 0; i < Math.min(state.maxNodesLoading, unloadedGeometry.length); i++) {
 		unloadedGeometry[i].load();
 	}
 

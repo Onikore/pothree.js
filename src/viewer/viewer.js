@@ -31,6 +31,11 @@ import { EventDispatcher } from "../EventDispatcher.js";
 import { ClassificationScheme } from "../materials/ClassificationScheme.js";
 
 import JSON5 from "../../libs/json5-2.1.3/json5.mjs";
+import {updatePointClouds} from "../Potree_update_visibility.js";
+import {GeoPackageLoader} from "../loader/GeoPackageLoader.js";
+import {state} from "../state.js";
+import {loadProject} from "./LoadProject.js";
+import {saveProject} from "./SaveProject.js";
 
 
 export class Viewer extends EventDispatcher{
@@ -85,7 +90,7 @@ export class Viewer extends EventDispatcher{
 
 				// {
 				// 	let imgMenuToggle = document.createElement('img');
-				// 	imgMenuToggle.src = new URL(Potree.resourcePath + '/icons/menu_button.svg').href;
+				// 	imgMenuToggle.src = new URL(state.resourcePath + '/icons/menu_button.svg').href;
 				// 	imgMenuToggle.onclick = this.toggleSidebar;
 				// 	// imgMenuToggle.classList.add('potree_menu_toggle');
 
@@ -94,7 +99,7 @@ export class Viewer extends EventDispatcher{
 
 				// {
 				// 	let imgMenuToggle = document.createElement('img');
-				// 	imgMenuToggle.src = new URL(Potree.resourcePath + '/icons/menu_button.svg').href;
+				// 	imgMenuToggle.src = new URL(state.resourcePath + '/icons/menu_button.svg').href;
 				// 	imgMenuToggle.onclick = this.toggleSidebar;
 				// 	// imgMenuToggle.classList.add('potree_menu_toggle');
 
@@ -103,7 +108,7 @@ export class Viewer extends EventDispatcher{
 
 				// {
 				// 	let imgMenuToggle = document.createElement('img');
-				// 	imgMenuToggle.src = new URL(Potree.resourcePath + '/icons/menu_button.svg').href;
+				// 	imgMenuToggle.src = new URL(state.resourcePath + '/icons/menu_button.svg').href;
 				// 	imgMenuToggle.onclick = this.toggleSidebar;
 				// 	// imgMenuToggle.classList.add('potree_menu_toggle');
 
@@ -300,6 +305,7 @@ export class Viewer extends EventDispatcher{
 
 		this.renderer.setAnimationLoop(this.loop.bind(this));
 
+
 		this.loadGUI = this.loadGUI.bind(this);
 
 		this.annotationTool = new AnnotationTool(this);
@@ -443,7 +449,7 @@ export class Viewer extends EventDispatcher{
 		}
 
 		if(bg === "skybox"){
-			this.skybox = Utils.loadSkybox(new URL(Potree.resourcePath + '/textures/skybox2/').href);
+			this.skybox = Utils.loadSkybox(new URL(state.resourcePath + '/textures/skybox2/').href);
 		}
 
 		this.background = bg;
@@ -544,14 +550,14 @@ export class Viewer extends EventDispatcher{
 	}
 
 	setPointBudget (value) {
-		if (Potree.pointBudget !== value) {
-			Potree.pointBudget = parseInt(value);
+		if (state.pointBudget !== value) {
+			state.pointBudget = parseInt(value);
 			this.dispatchEvent({'type': 'point_budget_changed', 'viewer': this});
 		}
 	};
 
 	getPointBudget () {
-		return Potree.pointBudget;
+		return state.pointBudget;
 	};
 
 	setShowAnnotations (value) {
@@ -823,7 +829,7 @@ export class Viewer extends EventDispatcher{
 	};
 
 	moveToGpsTimeVicinity(time){
-		const result = Potree.Utils.findClosestGpsTime(time, viewer);
+		const result = Utils.findClosestGpsTime(time, viewer);
 
 		const box  = result.node.pointcloud.deepestNodeAt(result.position).getBoundingBox();
 		const diameter = box.min.distanceTo(box.max);
@@ -977,14 +983,14 @@ export class Viewer extends EventDispatcher{
 		// const json = JSON.parse(text);
 
 		if(json.type === "Potree"){
-			Potree.loadProject(viewer, json);
+			loadProject(viewer, json);
 		}
 
-		//Potree.loadProject(this, url);
+		//loadProject(this, url);
 	}
 
 	saveProject(){
-		return Potree.saveProject(this);
+		return saveProject(this);
 	}
 	
 	loadSettingsFromURL(){
@@ -1168,17 +1174,17 @@ export class Viewer extends EventDispatcher{
 
 		let viewer = this;
 		let sidebarContainer = $('#potree_sidebar_container');
-		sidebarContainer.load(new URL(Potree.scriptPath + '/sidebar.html').href, () => {
+		sidebarContainer.load(new URL(state.scriptPath + '/sidebar.html').href, () => {
 			sidebarContainer.css('width', '300px');
 			sidebarContainer.css('height', '100%');
 
 			let imgMenuToggle = document.createElement('img');
-			imgMenuToggle.src = new URL(Potree.resourcePath + '/icons/menu_button.svg').href;
+			imgMenuToggle.src = new URL(state.resourcePath + '/icons/menu_button.svg').href;
 			imgMenuToggle.onclick = this.toggleSidebar;
 			imgMenuToggle.classList.add('potree_menu_toggle');
 
 			let imgMapToggle = document.createElement('img');
-			imgMapToggle.src = new URL(Potree.resourcePath + '/icons/map_icon.png').href;
+			imgMapToggle.src = new URL(state.resourcePath + '/icons/map_icon.png').href;
 			imgMapToggle.style.display = 'none';
 			imgMapToggle.onclick = e => { this.toggleMap(); };
 			imgMapToggle.id = 'potree_map_toggle';
@@ -1196,7 +1202,7 @@ export class Viewer extends EventDispatcher{
 
 			i18n.init({
 				lng: 'en',
-				resGetPath: Potree.resourcePath + '/lang/__lng__/__ns__.json',
+				resGetPath: state.resourcePath + '/lang/__lng__/__ns__.json',
 				preload: ['en', 'fr', 'de', 'jp', 'se', 'es', 'zh', 'it','ca'],
 				getAsync: true,
 				debug: false
@@ -1216,7 +1222,7 @@ export class Viewer extends EventDispatcher{
 				//	$(callback);
 				//}
 
-				let elProfile = $('<div>').load(new URL(Potree.scriptPath + '/profile.html').href, () => {
+				let elProfile = $('<div>').load(new URL(state.scriptPath + '/profile.html').href, () => {
 					$(document.body).append(elProfile.children());
 					this.profileWindow = new ProfileWindow(this);
 					this.profileWindowController = new ProfileWindowController(this);
@@ -1287,7 +1293,7 @@ export class Viewer extends EventDispatcher{
 						const json = JSON5.parse(text);
 
 						if(json.type === "Potree"){
-							Potree.loadProject(viewer, json);
+							loadProject(viewer, json);
 						}
 					}catch(e){
 						console.error("failed to parse the dropped file as JSON");
@@ -1313,7 +1319,7 @@ export class Viewer extends EventDispatcher{
 							source: file.name,
 						};
 						
-						const geo = await Potree.GeoPackageLoader.loadBuffer(buffer, params);
+						const geo = await GeoPackageLoader.loadBuffer(buffer, params);
 						viewer.scene.addGeopackage(geo);
 					}
 				}
@@ -1542,7 +1548,7 @@ export class Viewer extends EventDispatcher{
 
 	update(delta, timestamp){
 
-		if(Potree.measureTimings) performance.mark("update-start");
+		if(state.measureTimings) performance.mark("update-start");
 
 		this.dispatchEvent({
 			type: 'update_start',
@@ -1554,7 +1560,7 @@ export class Viewer extends EventDispatcher{
 		const camera = scene.getActiveCamera();
 		const visiblePointClouds = this.scene.pointclouds.filter(pc => pc.visible)
 		
-		Potree.pointLoadLimit = Potree.pointBudget * 2;
+		state.pointLoadLimit = state.pointBudget * 2;
 
 		const lTarget = camera.position.clone().add(camera.getWorldDirection(new THREE.Vector3()).multiplyScalar(1000));
 		this.scene.directionalLight.position.copy(camera.position);
@@ -1603,7 +1609,7 @@ export class Viewer extends EventDispatcher{
 		}
 
 		if (!this.freeze) {
-			let result = Potree.updatePointClouds(scene.pointclouds, camera, this.renderer);
+			let result = updatePointClouds(scene.pointclouds, camera, this.renderer);
 
 
 			// DEBUG - ONLY DISPLAY NODES THAT INTERSECT MOUSE
@@ -1658,8 +1664,8 @@ export class Viewer extends EventDispatcher{
 			// });
 			// const duration = (performance.now() - tStart).toFixed(2);
 
-			// Potree.debug.computeNearDuration = duration;
-			// Potree.debug.numNodes = numNodes;
+			// state.debug.computeNearDuration = duration;
+			// state.debug.numNodes = numNodes;
 
 			//console.log(lowestDistance.toString(2), duration);
 
@@ -1816,7 +1822,7 @@ export class Viewer extends EventDispatcher{
 			delta: delta,
 			timestamp: timestamp});
 			
-		if(Potree.measureTimings) {
+		if(state.measureTimings) {
 			performance.mark("update-end");
 			performance.measure("update", "update-start", "update-end");
 		}
@@ -1882,7 +1888,7 @@ export class Viewer extends EventDispatcher{
 	}
 	
 	render(){
-		if(Potree.measureTimings) performance.mark("render-start");
+		if(state.measureTimings) performance.mark("render-start");
 
 		try{
 
@@ -1892,14 +1898,14 @@ export class Viewer extends EventDispatcher{
 			this.onCrash(e);
 		}
 		
-		if(Potree.measureTimings){
+		if(state.measureTimings){
 			performance.mark("render-end");
 			performance.measure("render", "render-start", "render-end");
 		}
 	}
 
 	resolveTimings(timestamp){
-		if(Potree.measureTimings){
+		if(state.measureTimings){
 			if(!this.toggle){
 				this.toggle = timestamp;
 			}
@@ -1933,7 +1939,7 @@ export class Viewer extends EventDispatcher{
 					group.max = Math.max(group.max, measure.duration);
 				}
 
-				let glQueries = Potree.resolveQueries(this.renderer.getContext());
+				let glQueries = new Map(); // GPU timer queries: Potree.resolveQueries was referenced but never existed (threw with measureTimings)
 				for(let [key, value] of glQueries){
 
 					let group = {
@@ -2004,7 +2010,7 @@ export class Viewer extends EventDispatcher{
 			this.stats.begin();
 		}
 
-		if(Potree.measureTimings){
+		if(state.measureTimings){
 			performance.mark("loop-start");
 		}
 
@@ -2018,14 +2024,14 @@ export class Viewer extends EventDispatcher{
 		// }
 
 
-		if(Potree.measureTimings){
+		if(state.measureTimings){
 			performance.mark("loop-end");
 			performance.measure("loop", "loop-start", "loop-end");
 		}
 		
 		this.resolveTimings(timestamp);
 
-		Potree.framenumber++;
+		state.framenumber++;
 
 		if(this.stats){
 			this.stats.end();

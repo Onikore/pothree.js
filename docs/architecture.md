@@ -27,22 +27,22 @@
 
 ## Глобальное состояние
 
-Модуль `src/Potree.js` — точка входа сборки. Rollup собирает его в UMD `build/potree/potree.js`
-с глобальным `window.Potree`. Важные глобальные значения:
+Изменяемое состояние живёт в модуле `src/state.js` (объект `state`); код импортирует его, а не
+обращается к глобальному `Potree`, поэтому ядро работает и как ES‑модуль. Из пакета он
+экспортируется как `Potree.state`. В UMD‑сборке (`src/umd.js`) `src/umdCompat.js` дополнительно
+вешает на `window.Potree` свойства‑аксессоры, так что старый код `Potree.pointBudget = …` работает.
 
-| Имя | Что это |
+| Поле `state` (и `Potree.*` в UMD) | Что это |
 |---|---|
-| `Potree.pointBudget` | общий бюджет точек на кадр для всех облаков (по умолчанию 1 000 000) |
-| `Potree.maxNodesLoading` | сколько узлов можно грузить одновременно (4) |
-| `Potree.numNodesLoading` | сколько узлов грузится прямо сейчас; эталонные тесты ждут, пока станет 0 |
-| `Potree.lru` | LRU-кэш загруженных узлов; выгружает узлы сверх бюджета |
-| `Potree.workerPool` | пул воркеров декодирования |
-| `Potree.scriptPath`, `Potree.resourcePath` | откуда грузить воркеры и ресурсы (вычисляется по URL скрипта) |
-| `Potree.framenumber` | номер кадра |
-
-Код ядра обращается к этим значениям через глобальный `Potree.*` и через `exports.*`
-(`Potree_update_visibility.js`). Это работает только в UMD-сборке: при импорте как ES-модуль
-без глобального `Potree` ломается. Исправляется в шаге 1 миграции.
+| `pointBudget` | общий бюджет точек на кадр для всех облаков (по умолчанию 1 000 000) |
+| `pointLoadLimit` | сколько точек держать загруженными (вьюер ставит 2 × `pointBudget`) |
+| `maxNodesLoading` | сколько узлов можно грузить одновременно (8) |
+| `numNodesLoading` | сколько узлов грузится прямо сейчас; эталонные тесты ждут, пока станет 0 |
+| `lru` | LRU-кэш загруженных узлов; выгружает узлы сверх бюджета |
+| `workerPool` | пул воркеров декодирования |
+| `scriptPath`, `resourcePath` | откуда грузить воркеры и ресурсы (URL скрипта или `import.meta.url`) |
+| `framenumber` | номер кадра |
+| `measureTimings`, `debug`, `version` | замеры `performance.mark`, отладочные флаги, версия |
 
 ## Путь точки: от URL до экрана
 
@@ -197,4 +197,5 @@ clipping (box, polygon, sphere, plane). Фрагментный — форму т
 | 4 | three r151 → r152. Управление цветом выключено так, чтобы картинка совпадала с r124: `src/threeSetup.js` (импортируется первым в `src/Potree.js`) ставит `ColorManagement.enabled = false`; у рендереров вьюера и окна профиля `outputColorSpace = LinearSRGBColorSpace`; в примерах после импорта three — та же строка для их копии three. |
 | — | Удалены по решению K: Arena4D, `DeviceOrientationControls`, `GeoControls`, мёртвый код, интеграция Cesium. |
 | 7 (r163) | three r152 → r163: `useLegacyLights = true` (прежняя яркость мешей до r186), окно профиля — `addUpdateRange` в элементах массива; picking на 24-битной глубине (точнее, см. `docs/testing.md`). |
+| 7а.1 | Глобальное `Potree.*` в коде → модуль `src/state.js` и прямые импорты (49 файлов). UMD сохраняет `Potree.pointBudget` и др. через `src/umdCompat.js`. Попутно: удалён несуществовавший блок DEM в `Potree_update_visibility.js`, `viewer.resolveQueries` (функции не было), `LoadProject` создаёт объёмы через импорт классов. |
 | 7 (r186) | three r163 → r186: свет без `useLegacyLights` (интенсивности × π, `decay = 0`), `THREE.Timer` вместо устаревшего `Clock`, `super.dispose()` в `ProfileFakeOctree`, `three` — `peerDependency`. |

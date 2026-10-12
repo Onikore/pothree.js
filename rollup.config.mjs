@@ -1,6 +1,9 @@
-// Rollup 4 config. Bundles three.js from npm (node_modules/three) into the UMD build so that
-// <script src="potree.js"> keeps working with the global `Potree`. See docs/build.md.
+// Rollup 4 config. Two builds of the same code (docs/build.md):
+// - build/potree/potree.module.js: ES module, `three` external - the page or bundler supplies the one
+//   copy of three.js (import map / npm). Use this one. Minified copy: potree.module.min.js.
+// - build/potree/potree.js: UMD with three.js bundled, for <script src="potree.js"> and the global `Potree`.
 import {nodeResolve} from "@rollup/plugin-node-resolve";
+import terser from "@rollup/plugin-terser";
 
 const worker = (input, file) => ({
 	input,
@@ -11,6 +14,16 @@ const worker = (input, file) => ({
 export default [
 	{
 		input: "src/Potree.js",
+		external: ["three", /^three\//],
+		output: [
+			{file: "build/potree/potree.module.js", format: "es", sourcemap: true},
+			// keep_classnames: class names are user-visible (InputHandler logs, project files)
+			{file: "build/potree/potree.module.min.js", format: "es", sourcemap: true,
+				plugins: [terser({keep_classnames: true})]},
+		],
+	},
+	{
+		input: "src/umd.js",
 		treeshake: false,
 		plugins: [nodeResolve()],
 		output: {

@@ -4,7 +4,8 @@
 	<script type="importmap">
 	{"imports": {
 		"three": "../node_modules/three/build/three.module.js",
-		"three/examples/jsm/": "../node_modules/three/examples/jsm/"
+		"three/examples/jsm/": "../node_modules/three/examples/jsm/",
+		"potree": "../build/potree/potree.module.js"
 	}}
 	</script>
 	<meta charset="utf-8">
@@ -31,7 +32,6 @@
 	<script src="../libs/openlayers3/ol.js"></script>
 	<script src="../libs/i18next/i18next.js"></script>
 	<script src="../libs/jstree/jstree.js"></script>
-	<script src="../build/potree/potree.js"></script>
 	<script src="../libs/plasio/js/laslaz.js"></script>
 
 	<div class="potree_container" style="position: absolute; width: 100%; height: 100%; left: 0px; top: 0px; ">
@@ -41,9 +41,9 @@
 	</div>
 	
 	<script type="module">
+	import * as Potree from "potree";
 
 	import * as THREE from "three";
-	THREE.ColorManagement.enabled = false; // keep three.js r124 colors, see src/threeSetup.js
 	
 		window.viewer = new Potree.Viewer(document.getElementById("potree_render_area"));
 		
@@ -83,9 +83,9 @@
 	</script>
 
 	<script type="module">
+	import * as Potree from "potree";
 
 	import * as THREE from "three";
-	THREE.ColorManagement.enabled = false; // keep three.js r124 colors, see src/threeSetup.js
 	
 		const animation = new Potree.CameraAnimation(viewer);
 
@@ -117,9 +117,9 @@
 	</script>
 
 	<script type="module">
+	import * as Potree from "potree";
 
 	import * as THREE from "three";
-	THREE.ColorManagement.enabled = false; // keep three.js r124 colors, see src/threeSetup.js
 	
 	// viewer.onGUILoaded(() => {
 		
@@ -169,7 +169,7 @@
 	// 				<div style="display: flex; margin: 0.2em 0em">
 						
 	// 					<span style="flex-grow: 0;">
-	// 						<img name="add" src="${Potree.resourcePath}/icons/add.svg" style="width: 1.5em; height: 1.5em"/>
+	// 						<img name="add" src="${Potree.state.resourcePath}/icons/add.svg" style="width: 1.5em; height: 1.5em"/>
 	// 					</span>
 	// 					<span style="flex-grow: 1"></span>
 	// 				</div>
@@ -187,16 +187,16 @@
 	// 			let elKeyframe = $(`
 	// 				<div style="display: flex; margin: 0.2em 0em">
 	// 					<span style="flex-grow: 0;">
-	// 						<img name="assign" src="${Potree.resourcePath}/icons/assign.svg" style="width: 1.5em; height: 1.5em"/>
+	// 						<img name="assign" src="${Potree.state.resourcePath}/icons/assign.svg" style="width: 1.5em; height: 1.5em"/>
 	// 					</span>
 	// 					<span style="flex-grow: 0;">
-	// 						<img name="move" src="${Potree.resourcePath}/icons/circled_dot.svg" style="width: 1.5em; height: 1.5em"/>
+	// 						<img name="move" src="${Potree.state.resourcePath}/icons/circled_dot.svg" style="width: 1.5em; height: 1.5em"/>
 	// 					</span>
 	// 					<span style="flex-grow: 0; width: 1.5em; height: 1.5em"></span>
 	// 					<span style="flex-grow: 0; font-size: 1.5em">keyframe</span>
 	// 					<span style="flex-grow: 1"></span>
 	// 					<span style="flex-grow: 0;">
-	// 						<img name="delete" src="${Potree.resourcePath}/icons/remove.svg" style="width: 1.5em; height: 1.5em"/>
+	// 						<img name="delete" src="${Potree.state.resourcePath}/icons/remove.svg" style="width: 1.5em; height: 1.5em"/>
 	// 					</span>
 	// 				</div>
 	// 			`);

@@ -24,4 +24,4 @@ export class WorkerPool{
 	}
 };
 
-//Potree.workerPool = new Potree.WorkerPool();
+//state.workerPool = new WorkerPool();

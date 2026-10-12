@@ -9,7 +9,10 @@
 | Файл | Строк | Назначение |
 |---|---|---|
 | `threeSetup.js` | 18 | глобальные настройки three.js для Potree (выключает управление цветом r152+); импортируется первым |
-| `Potree.js` | 306 | точка входа: реэкспорт всего API, глобальное состояние (`pointBudget`, `lru`, `workerPool`, пути), `loadPointCloud()`, jQuery-плагин `selectgroup` |
+| `Potree.js` | 246 | точка входа ES: реэкспорт всего API (`state` — из `state.js`), `loadPointCloud()` |
+| `state.js` | 62 | изменяемое глобальное состояние: `pointBudget`, `numNodesLoading`, `lru`, `workerPool`, пути к скриптам и ресурсам |
+| `umd.js`, `umdCompat.js` | 27 | вход UMD-сборки: `Potree.js` + аксессоры `window.Potree.pointBudget` и др. на `state` (совместимость) |
+| `projections.js` | 33 | именованные проекции proj4 (EPSG/UTM), регистрируются при первом использовании |
 | `Potree_update_visibility.js` | 416 | LOD: `updatePointClouds()` → `updateVisibility()` — выбор видимых узлов по приоритету, бюджет точек, очередь загрузки |
 | `PointCloudTree.js` | 50 | базовые классы `PointCloudTree` (Object3D) и `PointCloudTreeNode` |
 | `PointCloudOctree.js` | 1153 | облако в сцене: узлы (`toTreeNode`), текстура видимых узлов, picking (`pick`), профиль, `getPointsInBox`, bbox, `find` |
@@ -90,6 +93,7 @@
 | `EDLRenderer.js` | рендерер кадра с EDL, скриншоты, shadow map |
 | `HQSplatRenderer.js` | рендерер кадра с взвешенными splats |
 | `NavigationCube.js` | куб навигации |
+| `selectgroup.js` | jQuery-плагин `selectgroup` (группы кнопок сайдбара); ставится при импорте, если есть jQuery |
 | `map.js` | мини-карта на OpenLayers |
 | `profile.js`, `profile.html` | окно профиля высот (d3) |
 | `sidebar.js`, `sidebar.html`, `potree.css` | боковая панель (jQuery UI, jstree, spectrum) |

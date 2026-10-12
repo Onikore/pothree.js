@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import {state} from "../../state.js";
 
 export class EptLaszipLoader {
 	async load(node) {
@@ -87,9 +88,9 @@ export class EptLazBatcher {
 	push(las) {
 		const { isFullFile, compressed, header, eb, pointCount, nodemin } = las
 
-		let workerPath = Potree.scriptPath +
+		let workerPath = state.scriptPath +
 			'/workers/EptLaszipDecoderWorker.js';
-		let worker = Potree.workerPool.getWorker(workerPath);
+		let worker = state.workerPool.getWorker(workerPath);
 		const pointAttributes = this.node.owner.pointAttributes;
 
 		worker.onmessage = (e) => {
@@ -153,7 +154,7 @@ export class EptLazBatcher {
 				pointCount,
 				new THREE.Vector3(...e.data.mean));
 
-			Potree.workerPool.returnWorker(workerPath, worker);
+			state.workerPool.returnWorker(workerPath, worker);
 		};
 
 		let message = { isFullFile, compressed, header, eb, pointCount, nodemin };

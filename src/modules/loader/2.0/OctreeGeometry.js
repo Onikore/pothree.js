@@ -1,5 +1,6 @@
 
 import * as THREE from "three";
+import {state} from "../../../state.js";
 
 export class OctreeGeometry{
 
@@ -71,7 +72,7 @@ export class OctreeGeometryNode{
 
 	load(){
 
-		if (Potree.numNodesLoading >= Potree.maxNodesLoading) {
+		if (state.numNodesLoading >= state.maxNodesLoading) {
 			return;
 		}
 

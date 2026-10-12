@@ -10,8 +10,8 @@
 | | |
 |---|---|
 | three.js | npm-пакет `three` r186, `peerDependency` (`^0.186.0`); в UMD-сборку вшит |
-| Сборка | rollup 4 → `build/potree/potree.js` (UMD, глобальный `Potree`, three.js внутри) |
-| Примеры | `examples/*.html`, three.js подключается через import map из `node_modules` |
+| Сборка | rollup 4 → `build/potree/potree.module.js` (ES, `three` внешний) и `build/potree/potree.js` (UMD, глобальный `Potree`, three.js внутри) |
+| Примеры | `examples/*.html`, `import * as Potree from "potree"`; three.js и Potree — через import map, одна копия three |
 | VR/WebXR | удалён |
 
 ### Быстрый старт

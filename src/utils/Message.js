@@ -1,10 +1,11 @@
+import {state} from "../state.js";
 
 export class Message{
 
 	constructor(content){
 		this.content = content;
 
-		let closeIcon = `${Potree.resourcePath}/icons/close.svg`;
+		let closeIcon = `${state.resourcePath}/icons/close.svg`;
 
 		this.element = $(`
 			<div class="potree_message">

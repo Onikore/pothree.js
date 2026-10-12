@@ -1,5 +1,6 @@
 
 import {Utils} from "../../utils.js";
+import {state} from "../../state.js";
 
 export class CameraAnimationPanel{
 	constructor(viewer, propertiesPanel, animation){
@@ -79,7 +80,7 @@ export class CameraAnimationPanel{
 			//let index = 0;
 
 			// <span style="flex-grow: 0;">
-			// 				<img name="add" src="${Potree.resourcePath}/icons/add.svg" style="width: 1.5em; height: 1.5em"/>
+			// 				<img name="add" src="${state.resourcePath}/icons/add.svg" style="width: 1.5em; height: 1.5em"/>
 			// 			</span>
 
 			const addNewKeyframeItem = (index) => {
@@ -103,16 +104,16 @@ export class CameraAnimationPanel{
 				let elKeyframe = $(`
 					<div style="display: flex; margin: 0.2em 0em">
 						<span style="flex-grow: 0;">
-							<img name="assign" src="${Potree.resourcePath}/icons/assign.svg" style="width: 1.5em; height: 1.5em"/>
+							<img name="assign" src="${state.resourcePath}/icons/assign.svg" style="width: 1.5em; height: 1.5em"/>
 						</span>
 						<span style="flex-grow: 0;">
-							<img name="move" src="${Potree.resourcePath}/icons/circled_dot.svg" style="width: 1.5em; height: 1.5em"/>
+							<img name="move" src="${state.resourcePath}/icons/circled_dot.svg" style="width: 1.5em; height: 1.5em"/>
 						</span>
 						<span style="flex-grow: 0; width: 1.5em; height: 1.5em"></span>
 						<span style="flex-grow: 0; font-size: 1.5em">keyframe</span>
 						<span style="flex-grow: 1"></span>
 						<span style="flex-grow: 0;">
-							<img name="delete" src="${Potree.resourcePath}/icons/remove.svg" style="width: 1.5em; height: 1.5em"/>
+							<img name="delete" src="${state.resourcePath}/icons/remove.svg" style="width: 1.5em; height: 1.5em"/>
 						</span>
 					</div>
 				`);

@@ -1,6 +1,7 @@
 
 
 import {Utils} from "../../utils.js";
+import {state} from "../../state.js";
 
 export class MeasurePanel{
 
@@ -24,7 +25,7 @@ export class MeasurePanel{
 			</table>
 		`);
 
-		let copyIconPath = Potree.resourcePath + '/icons/copy.svg';
+		let copyIconPath = state.resourcePath + '/icons/copy.svg';
 
 		for (let point of points) {
 			let x = Utils.addCommas(point.x.toFixed(3));

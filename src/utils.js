@@ -5,6 +5,8 @@ import {Volume} from "./utils/Volume.js";
 import {Profile} from "./utils/Profile.js";
 import {Measure} from "./utils/Measure.js";
 import {PolygonClipVolume} from "./utils/PolygonClipVolume.js";
+import {state} from "./state.js";
+import {registerProjections} from "./projections.js";
 
 export class Utils {
 	static async loadShapefileFeatures (file, callback) {
@@ -832,24 +834,24 @@ export class Utils {
 	static getMeasurementIcon(measurement){
 		if (measurement instanceof Measure) {
 			if (measurement.showDistances && !measurement.showArea && !measurement.showAngles) {
-				return `${Potree.resourcePath}/icons/distance.svg`;
+				return `${state.resourcePath}/icons/distance.svg`;
 			} else if (measurement.showDistances && measurement.showArea && !measurement.showAngles) {
-				return `${Potree.resourcePath}/icons/area.svg`;
+				return `${state.resourcePath}/icons/area.svg`;
 			} else if (measurement.maxMarkers === 1) {
-				return `${Potree.resourcePath}/icons/point.svg`;
+				return `${state.resourcePath}/icons/point.svg`;
 			} else if (!measurement.showDistances && !measurement.showArea && measurement.showAngles) {
-				return `${Potree.resourcePath}/icons/angle.png`;
+				return `${state.resourcePath}/icons/angle.png`;
 			} else if (measurement.showHeight) {
-				return `${Potree.resourcePath}/icons/height.svg`;
+				return `${state.resourcePath}/icons/height.svg`;
 			} else {
-				return `${Potree.resourcePath}/icons/distance.svg`;
+				return `${state.resourcePath}/icons/distance.svg`;
 			}
 		} else if (measurement instanceof Profile) {
-			return `${Potree.resourcePath}/icons/profile.svg`;
+			return `${state.resourcePath}/icons/profile.svg`;
 		} else if (measurement instanceof Volume) {
-			return `${Potree.resourcePath}/icons/volume.svg`;
+			return `${state.resourcePath}/icons/volume.svg`;
 		} else if (measurement instanceof PolygonClipVolume) {
-			return `${Potree.resourcePath}/icons/clip-polygon.svg`;
+			return `${state.resourcePath}/icons/clip-polygon.svg`;
 		}
 	}
 
@@ -910,13 +912,13 @@ export class Utils {
 
 		return center;
 
-		// Potree.Utils.debugLine(viewer.scene.scene, P0, P1, 0x00ff00);
-		// Potree.Utils.debugLine(viewer.scene.scene, P2, P3, 0x0000ff);
+		// Utils.debugLine(viewer.scene.scene, P0, P1, 0x00ff00);
+		// Utils.debugLine(viewer.scene.scene, P2, P3, 0x0000ff);
 
-		// Potree.Utils.debugSphere(viewer.scene.scene, center, 0.03, 0xff00ff);
+		// Utils.debugSphere(viewer.scene.scene, center, 0.03, 0xff00ff);
 
 		// const radius = center.distanceTo(A);
-		// Potree.Utils.debugCircle(viewer.scene.scene, center, radius, new THREE.Vector3(0, 0, 1), 0xff00ff);
+		// Utils.debugCircle(viewer.scene.scene, center, radius, new THREE.Vector3(0, 0, 1), 0xff00ff);
 	}
 
 	static getNorthVec(p1, distance, projection){
@@ -955,6 +957,7 @@ export class Utils {
 			let transform;
 
 			if (projection.includes('EPSG')) {
+				registerProjections();
 				transform = proj4(projection, "WGS84");
 			} else {
 				proj4.defs("pointcloud", projection);

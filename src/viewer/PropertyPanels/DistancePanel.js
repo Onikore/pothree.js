@@ -2,12 +2,13 @@
 
 import {MeasurePanel} from "./MeasurePanel.js";
 import {Profile} from "./../../utils/Profile.js";
+import {state} from "../../state.js";
 
 export class DistancePanel extends MeasurePanel{
 	constructor(viewer, measurement, propertiesPanel){
 		super(viewer, measurement, propertiesPanel);
 
-		let removeIconPath = Potree.resourcePath + '/icons/remove.svg';
+		let removeIconPath = state.resourcePath + '/icons/remove.svg';
 		this.elContent = $(`
 			<div class="measurement_content selectable">
 				<span class="coordinates_table_container"></span>

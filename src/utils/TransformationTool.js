@@ -1,6 +1,7 @@
 
 import * as THREE from "three";
 import {Utils} from "../utils.js";
+import {state} from "../state.js";
 
 export class TransformationTool {
 	constructor(viewer) {
@@ -183,7 +184,7 @@ export class TransformationTool {
 		let sgPlane = new THREE.PlaneGeometry(4, 4, 1, 1);
 		let sgLowPolySphere = new THREE.SphereGeometry(1, 16, 16);
 
-		let texture = new THREE.TextureLoader().load(`${Potree.resourcePath}/icons/eye_2.png`);
+		let texture = new THREE.TextureLoader().load(`${state.resourcePath}/icons/eye_2.png`);
 
 		for(let handleName of Object.keys(this.focusHandles)){
 			let handle = this.focusHandles[handleName];

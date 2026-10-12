@@ -75,16 +75,19 @@ const FIND_VIEWER = `(() => {
 // Runs in the page: loading state. `nodes` (visible scene nodes) keeps growing after loading
 // finished, because Potree moves at most 2 loaded nodes per frame to the scene; `frame` lets us
 // require a number of rendered frames, not only wall time (frames are slow under SwiftShader).
-const STATE = `(() => {
+// Potree state: the global UMD object (original code) or `state` of the ES module (the fork's
+// examples import build/potree/potree.module.js and have no global Potree).
+const STATE = `(async () => {
 	const f = ${FIND_VIEWER};
 	if (!f) return null;
+	const P = f.w.Potree || (f.w.__potreeState ??= (await f.w.eval('import("potree")')).state);
 	const pcs = f.v.scene.pointclouds;
 	return {
-		loading: f.w.Potree.numNodesLoading,
+		loading: P.numNodesLoading,
 		pointclouds: pcs.length,
 		points: pcs.reduce((s, pc) => s + (pc.numVisiblePoints || 0), 0),
 		nodes: pcs.reduce((s, pc) => s + (pc.visibleNodes ? pc.visibleNodes.length : 0), 0),
-		frame: f.w.Potree.framenumber,
+		frame: P.framenumber,
 	};
 })()`;
 

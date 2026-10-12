@@ -1,6 +1,7 @@
 
 
 import {EventDispatcher} from "./EventDispatcher.js";
+import {state} from "./state.js";
 
 export class Action extends EventDispatcher {
 	constructor (args = {}) {
@@ -42,29 +43,29 @@ export class Action extends EventDispatcher {
 
 //Potree.Actions = {};
 //
-//Potree.Actions.ToggleAnnotationVisibility = class ToggleAnnotationVisibility extends Potree.Action {
+//Potree.Actions.ToggleAnnotationVisibility = class ToggleAnnotationVisibility extends Action {
 //	constructor (args = {}) {
 //		super(args);
 //
-//		this.icon = Potree.resourcePath + '/icons/eye.svg';
+//		this.icon = state.resourcePath + '/icons/eye.svg';
 //		this.showIn = 'sidebar';
 //		this.tooltip = 'toggle visibility';
 //	}
 //
 //	pairWith (annotation) {
 //		if (annotation.visible) {
-//			this.setIcon(Potree.resourcePath + '/icons/eye.svg');
+//			this.setIcon(state.resourcePath + '/icons/eye.svg');
 //		} else {
-//			this.setIcon(Potree.resourcePath + '/icons/eye_crossed.svg');
+//			this.setIcon(state.resourcePath + '/icons/eye_crossed.svg');
 //		}
 //
 //		annotation.addEventListener('visibility_changed', e => {
 //			let annotation = e.annotation;
 //
 //			if (annotation.visible) {
-//				this.setIcon(Potree.resourcePath + '/icons/eye.svg');
+//				this.setIcon(state.resourcePath + '/icons/eye.svg');
 //			} else {
-//				this.setIcon(Potree.resourcePath + '/icons/eye_crossed.svg');
+//				this.setIcon(state.resourcePath + '/icons/eye_crossed.svg');
 //			}
 //		});
 //	}
@@ -75,9 +76,9 @@ export class Action extends EventDispatcher {
 //		annotation.visible = !annotation.visible;
 //
 //		if (annotation.visible) {
-//			this.setIcon(Potree.resourcePath + '/icons/eye.svg');
+//			this.setIcon(state.resourcePath + '/icons/eye.svg');
 //		} else {
-//			this.setIcon(Potree.resourcePath + '/icons/eye_crossed.svg');
+//			this.setIcon(state.resourcePath + '/icons/eye_crossed.svg');
 //		}
 //	}
 //};

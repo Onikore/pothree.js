@@ -3,6 +3,7 @@
 import * as THREE from "three";
 import {Version} from "../Version.js";
 import {XHRFactory} from "../XHRFactory.js";
+import {state} from "../state.js";
 
 /**
  * laslaz code taken and adapted from plas.io js-laslaz
@@ -59,6 +60,7 @@ export class LasLazLoader {
 	}
 
 	async parse(node, buffer){
+		LASFile.potree = state; // worker path and pool for libs/plasio/js/laslaz.js (no global Potree in the ES build)
 		let lf = new LASFile(buffer);
 		let handler = new LasLazBatcher(node);
 
@@ -125,8 +127,8 @@ export class LasLazBatcher{
 	}
 
 	push (lasBuffer) {
-		const workerPath = Potree.scriptPath + '/workers/LASDecoderWorker.js';
-		const worker = Potree.workerPool.getWorker(workerPath);
+		const workerPath = state.scriptPath + '/workers/LASDecoderWorker.js';
+		const worker = state.workerPool.getWorker(workerPath);
 		const node = this.node;
 		const pointAttributes = node.pcoGeometry.pointAttributes;
 
@@ -173,10 +175,10 @@ export class LasLazBatcher{
 			this.node.numPoints = numPoints;
 			this.node.loaded = true;
 			this.node.loading = false;
-			Potree.numNodesLoading--;
+			state.numNodesLoading--;
 			this.node.mean = new THREE.Vector3(...e.data.mean);
 
-			Potree.workerPool.returnWorker(workerPath, worker);
+			state.workerPool.returnWorker(workerPath, worker);
 		};
 
 		let message = {

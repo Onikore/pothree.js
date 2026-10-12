@@ -5,6 +5,7 @@ import {Gradients} from "./Gradients.js";
 import {Shaders} from "../../build/shaders/shaders.js";
 import {ClassificationScheme} from "./ClassificationScheme.js";
 import {PointSizeType, PointShape, TreeType, ElevationGradientRepeat} from "../defines.js";
+import {state} from "../state.js";
 
 //
 // how to calculate the radius of a projected sphere in screen space
@@ -43,7 +44,7 @@ export class PointCloudMaterial extends THREE.RawShaderMaterial {
 		this._gradient = Gradients.SPECTRAL;
 		this.gradientTexture = PointCloudMaterial.generateGradientTexture(this._gradient);
 		this._matcap = "matcap.jpg";
-		this.matcapTexture = Potree.PointCloudMaterial.generateMatcapTexture(this._matcap);
+		this.matcapTexture = PointCloudMaterial.generateMatcapTexture(this._matcap);
 		this.lights = false;
 		this.fog = false;
 		this._treeType = treeType;
@@ -336,7 +337,7 @@ export class PointCloudMaterial extends THREE.RawShaderMaterial {
 	set matcap (value) {
 		if (this._matcap !== value) {
 			this._matcap = value;
-			this.matcapTexture = Potree.PointCloudMaterial.generateMatcapTexture(this._matcap);
+			this.matcapTexture = PointCloudMaterial.generateMatcapTexture(this._matcap);
 			this.uniforms.matcapTextureUniform.value = this.matcapTexture;
 		}
 	}
@@ -1063,7 +1064,7 @@ export class PointCloudMaterial extends THREE.RawShaderMaterial {
 	}
 	
 	static generateMatcapTexture (matcap) {
-	var url = new URL(Potree.resourcePath + "/textures/matcap/" + matcap).href;
+	var url = new URL(state.resourcePath + "/textures/matcap/" + matcap).href;
 	let texture = new THREE.TextureLoader().load( url );
 		texture.magFilter = texture.minFilter = THREE.LinearFilter; 
 		texture.needsUpdate = true;

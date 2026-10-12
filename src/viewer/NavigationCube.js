@@ -1,5 +1,6 @@
 
 import * as THREE from "three";
+import {state} from "../state.js";
 
 export class NavigationCube extends THREE.Object3D {
 
@@ -15,7 +16,7 @@ export class NavigationCube extends THREE.Object3D {
 				side: THREE.DoubleSide
 			});
 			new THREE.TextureLoader().load(
-				Potree.resourcePath + '/textures/navigation/' + img,
+				state.resourcePath + '/textures/navigation/' + img,
 				function(texture) {
 					texture.anisotropy = viewer.renderer.capabilities.getMaxAnisotropy();
 					material.map = texture;

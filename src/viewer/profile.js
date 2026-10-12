@@ -10,6 +10,7 @@ import {PointCloudTree} from "../PointCloudTree.js";
 import {PointCloudRenderer} from "../rendering/PointCloudRenderer.js";
 import {PointCloudMaterial} from "../materials/PointCloudMaterial.js";
 import {PointSizeType} from "../defines.js";
+import {state} from "../state.js";
 
 
 function copyMaterial(source, target){
@@ -260,31 +261,31 @@ export class ProfileWindow extends EventDispatcher {
 		this.autoFitEnabled = true; // completely disable/enable
 		this.autoFit = false; // internal
 
-		let cwIcon = `${Potree.resourcePath}/icons/arrow_cw.svg`;
+		let cwIcon = `${state.resourcePath}/icons/arrow_cw.svg`;
 		$('#potree_profile_rotate_cw').attr('src', cwIcon);
 
-		let ccwIcon = `${Potree.resourcePath}/icons/arrow_ccw.svg`;
+		let ccwIcon = `${state.resourcePath}/icons/arrow_ccw.svg`;
 		$('#potree_profile_rotate_ccw').attr('src', ccwIcon);
 		
-		let forwardIcon = `${Potree.resourcePath}/icons/arrow_up.svg`;
+		let forwardIcon = `${state.resourcePath}/icons/arrow_up.svg`;
 		$('#potree_profile_move_forward').attr('src', forwardIcon);
 
-		let backwardIcon = `${Potree.resourcePath}/icons/arrow_down.svg`;
+		let backwardIcon = `${state.resourcePath}/icons/arrow_down.svg`;
 		$('#potree_profile_move_backward').attr('src', backwardIcon);
 
-		let dxf2DIcon = `${Potree.resourcePath}/icons/file_dxf_2d.svg`;
+		let dxf2DIcon = `${state.resourcePath}/icons/file_dxf_2d.svg`;
 		$('#potree_download_dxf2D_icon').attr('src', dxf2DIcon);
 
-		let dxf3DIcon = `${Potree.resourcePath}/icons/file_dxf_3d.svg`;
+		let dxf3DIcon = `${state.resourcePath}/icons/file_dxf_3d.svg`;
 		$('#potree_download_dxf3D_icon').attr('src', dxf3DIcon);
 
-		let csvIcon = `${Potree.resourcePath}/icons/file_csv_2d.svg`;
+		let csvIcon = `${state.resourcePath}/icons/file_csv_2d.svg`;
 		$('#potree_download_csv_icon').attr('src', csvIcon);
 
-		let lasIcon = `${Potree.resourcePath}/icons/file_las_3d.svg`;
+		let lasIcon = `${state.resourcePath}/icons/file_las_3d.svg`;
 		$('#potree_download_las_icon').attr('src', lasIcon);
 
-		let closeIcon = `${Potree.resourcePath}/icons/close.svg`;
+		let closeIcon = `${state.resourcePath}/icons/close.svg`;
 		$('#closeProfileContainer').attr("src", closeIcon);
 
 		this.initTHREE();

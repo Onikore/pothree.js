@@ -4,6 +4,7 @@ import {Measure} from "./Measure.js";
 import {Utils} from "../utils.js";
 import {CameraMode} from "../defines.js";
 import { EventDispatcher } from "../EventDispatcher.js";
+import {state} from "../state.js";
 
 function updateAzimuth(viewer, measure){
 
@@ -274,8 +275,8 @@ export class MeasuringTool extends EventDispatcher{
 				let pr = Utils.projectedRadius(1, camera, distance, clientWidth, clientHeight);
 				let scale = (70 / pr);
 
-				if(Potree.debug.scale){
-					scale = (Potree.debug.scale / pr);
+				if(state.debug.scale){
+					scale = (state.debug.scale / pr);
 				}
 
 				label.scale.set(scale, scale, scale);

@@ -4,6 +4,7 @@ import * as THREE from "three";
 import {PointCloudTreeNode} from "./PointCloudTree.js";
 import {XHRFactory} from "./XHRFactory.js";
 import {Utils} from "./utils.js";
+import {state} from "./state.js";
 
 export class PointCloudOctreeGeometry{
 
@@ -118,13 +119,13 @@ export class PointCloudOctreeGeometryNode extends PointCloudTreeNode{
 	}
 
 	load(){
-		if (this.loading === true || this.loaded === true || Potree.numNodesLoading >= Potree.maxNodesLoading) {
+		if (this.loading === true || this.loaded === true || state.numNodesLoading >= state.maxNodesLoading) {
 			return;
 		}
 
 		this.loading = true;
 
-		Potree.numNodesLoading++;
+		state.numNodesLoading++;
 
 		if (this.pcoGeometry.loader.version.equalOrHigher('1.5')) {
 			if ((this.level % this.pcoGeometry.hierarchyStepSize) === 0 && this.hasChildren) {
@@ -232,7 +233,7 @@ export class PointCloudOctreeGeometryNode extends PointCloudTreeNode{
 						callback(node, hbuffer);
 					} else {
 						console.log('Failed to load file! HTTP status: ' + xhr.status + ', file: ' + hurl);
-						Potree.numNodesLoading--;
+						state.numNodesLoading--;
 					}
 				}
 			};

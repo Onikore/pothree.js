@@ -9,6 +9,10 @@ three.js r186 (`three@0.186.1`) — последняя стабильная ве
 
 ### Ломающие изменения
 
+- **Примеры используют ES‑сборку** `build/potree/potree.module.js` (`import * as Potree from "potree"`
+  через import map). Глобального `window.Potree` на этих страницах нет; состояние — `Potree.state.*`.
+  UMD `potree.js` и глобальный `Potree` для своих страниц остаются (см. `docs/build.md`).
+
 - **three.js больше не лежит в `libs/three.js`.** Он ставится из npm (пакет `three`, версия закреплена в
   `package.json`). Свои страницы, которые импортировали `../libs/three.js/build/three.module.js`,
   должны импортировать `"three"` и подключать его через import map или сборщик (пример — любой файл
@@ -50,6 +54,10 @@ three.js r186 (`three@0.186.1`) — последняя стабильная ве
 
 ### Исправлено
 
+- `Potree_update_visibility.js` обращался к несуществующему `Potree.DEM`, `viewer.js` — к
+  несуществующему `Potree.resolveQueries` (код никогда не выполнялся) — удалено. `loadProject`
+  создавал объёмы через `Potree[data.type]` — теперь через импорт классов.
+
 - **Больше 2048 видимых узлов приводили к падению отрисовки** (`RangeError: offset is out of bounds`):
   текстура видимости узлов была фиксированной 2048 × 1. Это бывает при больших бюджетах точек
   (десятки миллионов) или маленьком минимальном размере узла. Теперь текстура растёт по строкам
@@ -79,6 +87,16 @@ three.js r186 (`three@0.186.1`) — последняя стабильная ве
 
 ### Изменено
 
+- Импорт ядра без побочных эффектов, требующих глобальных библиотек: jQuery‑плагин `selectgroup`
+  перенесён во вьюер (`src/viewer/selectgroup.js`), регистрация проекций proj4 — ленивая
+  (`src/projections.js`). `potree.module.js` грузится на странице без jQuery и proj4.
+- `libs/plasio/js/laslaz.js` берёт путь воркера и пул из `state`, а не из глобального `Potree`.
+
+- Глобальное состояние (`pointBudget`, `numNodesLoading`, `lru`, `workerPool`, …) — модуль
+  `src/state.js`, экспорт `Potree.state`. Ядро больше не читает глобальный `window.Potree`, поэтому
+  работает и как ES‑модуль. В UMD‑сборке `Potree.pointBudget` и прочие поля по‑прежнему работают
+  (аксессоры на `state`).
+
 - **Обновлены библиотеки интерфейса** (известные уязвимости в старых версиях): jQuery 3.1.1 → 3.7.1
   (CVE-2019-11358, CVE-2020-11022/11023), jQuery UI 1.12.1 → 1.14.2 (CVE-2021-41182/41183/41184,
   CVE-2022-31160), jstree 3.3.8 → 3.3.17. Файл jQuery теперь `libs/jquery/jquery-3.7.1.min.js` —
@@ -100,6 +118,11 @@ three.js r186 (`three@0.186.1`) — последняя стабильная ве
   `src/viewer/VRButton.js`.
 
 ### Добавлено
+
+- Минифицированная ES‑сборка `build/potree/potree.module.min.js` (~0,5 МБ, gzip ~124 КБ; UMD — 3 МБ).
+
+- ES‑сборка `build/potree/potree.module.js` с `three` как внешней зависимостью: на странице одна копия
+  three.js (раньше две — в `potree.js` и в примере), сборка 0,8 МБ вместо 3 МБ.
 
 - Облака точек рисует three.js (`Potree.PointCloudRenderer`, `src/rendering/PointCloudRenderer.js`):
   `THREE.Points` + `RawShaderMaterial`, без собственного WebGL-рендерера и приватного API three.

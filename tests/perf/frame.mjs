@@ -14,6 +14,7 @@ import fs from "node:fs";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import pw from "playwright";
+import {exposePotree} from "../potreeGlobal.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const name = process.argv[2] ?? "ca13";
@@ -46,6 +47,7 @@ if (process.env.UNCAPPED === "1") glArgs.push("--disable-gpu-vsync", "--disable-
 const browser = await pw.chromium.launch({args: glArgs});
 const page = await browser.newPage({viewport: {width: 1280, height: 800}});
 await page.goto(`http://127.0.0.1:${server.address().port}/examples/${name}.html`);
+await exposePotree(page);
 await page.waitForFunction(() => window.viewer || window.potreeViewer);
 await page.evaluate((budget) => { const v = window.viewer || window.potreeViewer; v.setPointBudget(budget); if (budget > 10_000_000) v.setMinNodeSize(0); }, budget);
 

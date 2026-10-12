@@ -13,6 +13,7 @@ import http from "node:http";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import pw from "playwright";
+import {exposePotree} from "../potreeGlobal.mjs";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
@@ -48,6 +49,7 @@ const browser = await pw.chromium.launch({args: ["--use-angle=swiftshader", "--e
 async function pickGrid(name) {
 	const page = await browser.newPage({viewport: {width: 1280, height: 800}});
 	await page.goto(`http://127.0.0.1:${server.address().port}/examples/${name}.html`);
+	await exposePotree(page);
 	await page.waitForFunction(() => window.viewer && viewer.scene.pointclouds.length > 0, null, {timeout: 120_000});
 
 	const view = views[name]?.view;
