@@ -190,8 +190,14 @@ export class Viewer extends EventDispatcher{
 		}
 
 		if(typeof Stats !== "undefined"){
+			// FPS panel of stats.js (when the page loads it). Not fed through stats.begin()/end(): those
+			// redraw the ms graph (a 2D canvas drawImage) every frame, which cost 1.6-3.5 ms per frame
+			// next to WebGL (PERFORMANCE.md). Our own FPS panel is redrawn once per second (see loop).
 			this.stats = new Stats();
-			this.stats.showPanel( 0 ); // 0: fps, 1: ms, 2: mb, 3+: custom
+			this.statsFPS = this.stats.addPanel(new Stats.Panel("FPS", "#0ff", "#002"));
+			this.stats.showPanel(this.stats.dom.children.length - 1);
+			this.statsFrames = 0;
+			this.statsTime = performance.now();
 			document.body.appendChild( this.stats.dom );
 		}
 
@@ -2057,17 +2063,12 @@ export class Viewer extends EventDispatcher{
 
 	loop(timestamp){
 
-		if(this.stats){
-			this.stats.begin();
-		}
-
 		if(state.measureTimings){
 			performance.mark("loop-start");
 		}
 
 		this.clock.update(timestamp);
 		if(this.renderOnDemand && !this._needsFrame()){
-			if(this.stats) this.stats.end();
 			return;
 		}
 		this.update(this.clock.getDelta(), timestamp);
@@ -2089,8 +2090,13 @@ export class Viewer extends EventDispatcher{
 
 		state.framenumber++;
 
-		if(this.stats){
-			this.stats.end();
+		if(this.statsFPS){
+			this.statsFrames++;
+			if(timestamp >= this.statsTime + 1000){
+				this.statsFPS.update(this.statsFrames * 1000 / (timestamp - this.statsTime), 100);
+				this.statsTime = timestamp;
+				this.statsFrames = 0;
+			}
 		}
 	}
 
