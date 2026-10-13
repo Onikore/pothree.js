@@ -117,3 +117,20 @@ README в каждом коммите), коммитить и пушить ка�
 - Редкие фризы (1% low ~1,8 FPS на 35M) — у обеих версий, причина не исследована.
 - Аннотации сотнями — CSS `transform` (конфликт с перетаскиванием jQuery UI).
 - Асинхронный picking (решение M).
+
+## Ускорения 2026‑10‑13 (список «по порядку по всем пунктам»)
+
+1. CI на GitHub — `.github/workflows/test.yml` (сборка, бюджет размера `tests/size.mjs`, эталонный набор
+   на SwiftShader, `--jobs 2`, шрифты MS core + Noto, кэш данных). Смотреть: `gh run list -R Onikore/pothree.js`.
+2. `--gpu` у всех тестов (`tests/browser.mjs`), GPU‑эталон picking `baseline-gpu/pick.json`.
+3. «Покой» на GPU 1 с; `operations.mjs` ждёт кадры, а не время. `npm run test:gpu` — 139 с.
+4. OpenLayers/d3 по требованию (`src/lazyLibs.js`, решение L).
+5. laz-perf WASM для LAZ 1.x, `fzstd` для EPT zstd (решение I).
+6. HTTP/2 — замер: выигрыша нет, не делали.
+7. `viewer.setAdaptivePointBudget(true)` — опция.
+8. `pickAsync` + `Utils.dragPick` для перетаскивания инструментов (решение M).
+9. Объединение узлов — замер: не окупится (GPU‑bound), не делали.
+10. `queryPointsAsync`, типизированные команды, `uUseEdits`.
+
+Открыто: пауза драйвера 1,3–2,3 с после выделения миллионов точек (PERFORMANCE.md, «Операции над 15M»);
+`potree2` под сетевой задержкой грузится втрое дольше `lion` — похоже на последовательную иерархию.
