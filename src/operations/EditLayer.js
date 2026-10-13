@@ -4,7 +4,8 @@
  * Stored sparsely by node name: each point lives in exactly one node, so (node name, point index)
  * identifies it in Potree 1.x / 2.0 / EPT / COPC data. Per edited node:
  *   - flags: Uint8Array, one byte per point (EditFlags: selected, hidden). The same array is the
- *     node's `aEdit` vertex attribute, so a change is one buffer upload of that node.
+ *     node's `aEdit` vertex attribute (normalized: native R8_UNORM vertex format; unnormalized bytes
+ *     made ANGLE convert the buffer on every change), so a change is one buffer upload of that node.
  *   - attribute overrides: attribute name -> Map(point index -> value), written into the node's
  *     geometry (e.g. classification) and re-applied when the node is loaded again.
  * The source data is never changed; the edits are saved as their own JSON (toJSON / fromJSON).
@@ -12,8 +13,8 @@
  * Every change is a command on an undo stack (undo / redo). Selection is a flag too, so any
  * operation can take "the current selection" as input.
  *
- * GPU: while the layer has edits (`active`), PointCloudRenderer compiles the point shader with
- * `use_edits` and gives every drawn node of the cloud an aEdit attribute (zeros for nodes without
+ * GPU: while the layer has edits (`active`), PointCloudRenderer turns on uUseEdits in the point shader
+ * and gives every drawn node of the cloud an aEdit attribute (zeros for nodes without
  * edits) - see attachNode. Hidden points are moved out of the clip volume, selected ones are tinted
  * with `selectionColor`. Clouds without edits pay nothing.
  */
@@ -43,13 +44,14 @@ export class EditLayer extends THREE.EventDispatcher {
 		return this.nodes.size > 0;
 	}
 
-	entry(name, geometryNode = null) {
+	/** Edits of node `name`, created on first use; pointCount from a query chunk or the loaded geometry. */
+	entry(name, geometryNode = null, pointCount = null) {
 		let e = this.nodes.get(name);
 		if (!e) {
-			const count = geometryNode ? geometryNode.geometry.attributes.position.count : 0;
+			const count = pointCount ?? (geometryNode && geometryNode.geometry ? geometryNode.geometry.attributes.position.count : 0);
 			const flags = new Uint8Array(count);
 			// originals: attribute name -> Map(point index -> value in the source data)
-			e = {flags, attribute: new THREE.BufferAttribute(flags, 1), overrides: new Map(), originals: new Map(), geometryNode};
+			e = {flags, attribute: new THREE.BufferAttribute(flags, 1, true), overrides: new Map(), originals: new Map(), geometryNode};
 			this.nodes.set(name, e);
 		}
 		if (geometryNode) e.geometryNode = geometryNode;
@@ -83,7 +85,7 @@ export class EditLayer extends THREE.EventDispatcher {
 			}
 		} else {
 			// no edits in this node: shared zero flags of the right length
-			attribute = geometry.userData.zeroEdit ??= new THREE.BufferAttribute(new Uint8Array(geometry.attributes.position.count), 1);
+			attribute = geometry.userData.zeroEdit ??= new THREE.BufferAttribute(new Uint8Array(geometry.attributes.position.count), 1, true);
 		}
 		geometry.setAttribute("aEdit", attribute);
 		renderGeometry.setAttribute("aEdit", attribute);
@@ -162,30 +164,47 @@ export class EditLayer extends THREE.EventDispatcher {
 	flagsCommand(chunks, set, clear) {
 		const changes = [];
 		for (const chunk of chunks) {
-			const e = this.entry(chunk.name, chunk.node ? chunk.node.geometryNode : null);
-			const indices = [], before = [], after = [];
-			for (const i of chunk.indices) {
-				const old = e.flags[i];
-				const now = (old | set) & ~clear;
+			const e = this.entry(chunk.name, chunk.node ? chunk.node.geometryNode : null, chunk.pointCount);
+			const source = chunk.indices, flags = e.flags;
+			// typed arrays: a selection can be millions of points
+			const indices = new Uint32Array(source.length), before = new Uint8Array(source.length), after = new Uint8Array(source.length);
+			let n = 0;
+			for (let j = 0; j < source.length; j++) {
+				const i = source[j], old = flags[i], now = (old | set) & ~clear;
 				if (now !== old) {
-					indices.push(i); before.push(old); after.push(now);
+					indices[n] = i; before[n] = old; after[n] = now; n++;
 				}
 			}
-			if (indices.length > 0) {
-				changes.push({name: chunk.name, flags: true, indices: Uint32Array.from(indices),
-					before: Uint8Array.from(before), after: Uint8Array.from(after)});
+			if (n > 0) {
+				const all = n === source.length; // no copies for the common "whole node" case
+				changes.push({name: chunk.name, flags: true, indices: all ? indices : indices.slice(0, n),
+					before: all ? before : before.slice(0, n), after: all ? after : after.slice(0, n)});
 			}
 		}
 		return {label: `flags +${set} -${clear}`, changes};
 	}
 
-	/** Chunks of all points of this layer that have `flag` (loaded or not). */
-	flagged(flag) {
+	/**
+	 * Chunks of all points of this layer that have `flag` (loaded or not); with `except` (chunks from
+	 * queryPoints), points listed there are left out.
+	 */
+	flagged(flag, except = null) {
+		const exceptByName = except ? new Map(except.map(c => [c.name, c.indices])) : null;
 		const chunks = [];
 		for (const [name, e] of this.nodes) {
-			const indices = [];
-			for (let i = 0; i < e.flags.length; i++) if (e.flags[i] & flag) indices.push(i);
-			if (indices.length > 0) chunks.push({pointcloud: this.pointcloud, node: null, name, indices: Uint32Array.from(indices)});
+			const flags = e.flags;
+			let skip = null;
+			const excluded = exceptByName && exceptByName.get(name);
+			if (excluded) {
+				skip = new Uint8Array(flags.length);
+				for (let j = 0; j < excluded.length; j++) skip[excluded[j]] = 1;
+			}
+			let n = 0;
+			for (let i = 0; i < flags.length; i++) if ((flags[i] & flag) && !(skip && skip[i])) n++;
+			if (n === 0) continue;
+			const indices = new Uint32Array(n);
+			for (let i = 0, k = 0; i < flags.length; i++) if ((flags[i] & flag) && !(skip && skip[i])) indices[k++] = i;
+			chunks.push({pointcloud: this.pointcloud, node: null, name, indices});
 		}
 		return chunks;
 	}
@@ -250,7 +269,7 @@ export class EditLayer extends THREE.EventDispatcher {
 		for (const [name, n] of Object.entries(json.nodes)) {
 			const e = this.entry(name);
 			e.flags = new Uint8Array(n.count);
-			e.attribute = new THREE.BufferAttribute(e.flags, 1);
+			e.attribute = new THREE.BufferAttribute(e.flags, 1, true);
 			for (const [value, indices] of Object.entries(n.flags)) for (const i of indices) e.flags[i] = Number(value);
 			for (const [attributeName, pairs] of Object.entries(n.overrides)) e.overrides.set(attributeName, new Map(pairs));
 		}

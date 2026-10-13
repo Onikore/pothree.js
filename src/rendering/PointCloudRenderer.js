@@ -162,10 +162,10 @@ export class PointCloudRenderer {
 			}
 		}
 
+		// edits of the cloud (src/operations/EditLayer.js): uniform switch, see pointcloud.vs
 		let edits = octree.editLayer && octree.editLayer.active ? octree.editLayer : null;
-		if (edits) {
-			(rm.uniforms.uSelectionColor ??= {value: null}).value = edits.selectionColor;
-		}
+		(rm.uniforms.uUseEdits ??= {value: false}).value = edits !== null;
+		(rm.uniforms.uSelectionColor ??= {value: null}).value = edits ? edits.selectionColor : DEFAULT_SELECTION_COLOR;
 
 		this.state = {
 			octree, nodes, material, rm, shadowMaps, visibilityTextureData, view,
@@ -403,10 +403,6 @@ export class PointCloudRenderer {
 			if (attributes["source id"] || attributes["point source id"]) {
 				defines.push("#define clip_point_source_id_enabled");
 			}
-		}
-
-		if (octree.editLayer && octree.editLayer.active) {
-			defines.push("#define use_edits"); // aEdit flags, see src/operations/EditLayer.js
 		}
 
 		let definesString = defines.join("\n");
@@ -834,6 +830,9 @@ export class PointCloudRenderer {
 		setUniform(s.uniforms, "uExtraOffset", offset);
 	}
 }
+
+/** uSelectionColor of clouds without edits (unused while uUseEdits is off). */
+const DEFAULT_SELECTION_COLOR = new THREE.Color(1, 0.6, 0);
 
 /** Attributes declared in src/materials/shaders/pointcloud.vs. */
 const SHADER_ATTRIBUTES = new Set([

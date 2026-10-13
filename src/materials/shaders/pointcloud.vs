@@ -31,11 +31,12 @@ uniform mat4 uOctreeWorld;
 uniform mat4 uOctreeModelView;
 uniform highp sampler2D uNodeTexture;
 in float aSlot;
-#if defined(use_edits)
-	// edit flags of the point (src/operations/EditLayer.js): 1 = selected, 2 = hidden
-	in float aEdit;
-	uniform vec3 uSelectionColor;
-#endif
+// edit flags of the point (src/operations/EditLayer.js): 1 = selected, 2 = hidden. Read only while
+// uUseEdits is on (the cloud has edits; then every drawn node has an aEdit buffer). A uniform, not a
+// #define: turning edits on must not compile a new program (~2 s for this shader under ANGLE).
+in float aEdit;
+uniform bool uUseEdits;
+uniform vec3 uSelectionColor;
 flat out float vPCIndex;
 mat4 modelMatrix;
 mat4 modelViewMatrix;
@@ -1032,13 +1033,13 @@ void main() {
 
 	#endif
 
-	#if defined(use_edits)
-		int edit = int(aEdit + 0.5);
+	if (uUseEdits) {
+		int edit = int(aEdit * 255.0 + 0.5); // normalized UNSIGNED_BYTE: unnormalized bytes are converted by ANGLE on every change
 		if ((edit & 2) != 0) {
 			gl_Position = vec4(0.0, 0.0, 2.0, 1.0); // hidden: outside the clip volume, not drawn or picked
 			gl_PointSize = 0.0;
 		} else if ((edit & 1) != 0) {
 			vColor = mix(vColor, uSelectionColor, 0.7);
 		}
-	#endif
+	}
 }

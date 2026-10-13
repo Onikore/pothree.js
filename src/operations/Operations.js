@@ -7,13 +7,14 @@
  *   await viewer.operations.run("selection.region", {region: new BoxRegion(volume.matrixWorld)})
  *
  * kind: "view" (display only, shader), "query" (reads points), "edit" (changes points through the
- * EditLayer, undoable), "compute" (derives new data). ctx = {viewer, pointclouds, query, edits}:
+ * EditLayer, undoable), "compute" (derives new data). ctx = {viewer, pointclouds, query, queryAsync, edits}:
  *   pointclouds  params.pointclouds or all visible point clouds of the scene
  *   query        queryPoints (src/operations/PointQuery.js)
+ *   queryAsync   queryPointsAsync: same, without freezing the page on large clouds
  *   edits(pc)    the EditLayer of a point cloud
  */
 import * as THREE from "three";
-import {queryPoints, countPoints, worldPositions} from "./PointQuery.js";
+import {queryPoints, queryPointsAsync, countPoints, worldPositions} from "./PointQuery.js";
 import {editLayerOf, EditFlags} from "./EditLayer.js";
 
 export const OperationKinds = Object.freeze(["view", "query", "edit", "compute"]);
@@ -52,6 +53,7 @@ export class Operations extends THREE.EventDispatcher {
 			viewer,
 			pointclouds: params.pointclouds ?? viewer.scene.pointclouds.filter(pc => pc.visible),
 			query: queryPoints,
+			queryAsync: queryPointsAsync,
 			edits: editLayerOf,
 		};
 	}
@@ -86,18 +88,17 @@ const builtInOperations = [
 		kind: "edit",
 		label: "Select points in a region",
 		// params: region (BoxRegion | SphereRegion | ScreenPolygonRegion), mode "replace" | "add" | "remove"
-		run(ctx, {region, mode = "replace"}) {
-			return executePerCloud(ctx, (layer, pointcloud) => {
-				const hits = ctx.query(pointcloud, region);
+		async run(ctx, {region, mode = "replace"}) {
+			// query without freezing the page (queryPointsAsync), then one undoable step per cloud
+			const hitsPerCloud = [];
+			for (const pointcloud of ctx.pointclouds) hitsPerCloud.push(await ctx.queryAsync(pointcloud, region));
+			let i = 0;
+			return executePerCloud(ctx, (layer) => {
+				const hits = hitsPerCloud[i++];
 				const command = layer.flagCommand(hits, EditFlags.SELECTED, mode !== "remove");
 				if (mode === "replace") {
 					// clear the selection outside the region, in the same undo step
-					const inRegion = new Map(hits.map(c => [c.name, new Set(c.indices)]));
-					const outside = layer.flagged(EditFlags.SELECTED).map(c => {
-						const keep = inRegion.get(c.name);
-						return {...c, indices: keep ? c.indices.filter(i => !keep.has(i)) : c.indices};
-					});
-					command.changes.push(...layer.flagCommand(outside, EditFlags.SELECTED, false).changes);
+					command.changes.push(...layer.flagCommand(layer.flagged(EditFlags.SELECTED, hits), EditFlags.SELECTED, false).changes);
 				}
 				command.label = `select (${mode})`;
 				return command;

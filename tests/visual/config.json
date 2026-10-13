@@ -167,6 +167,10 @@
 				]
 			],
 			"note": "sidebar below Clipping: Tools menu has the new Selection block (step 8) (sidebar inside the iframe)"
+		},
+		"gradient_colors": {
+			"maxDiff": 0.008,
+			"note": "node loading order makes it vary 0.1-0.5 % run to run (also on the previous commit), sometimes just over 0.5 %"
 		}
 	},
 	"groups": {

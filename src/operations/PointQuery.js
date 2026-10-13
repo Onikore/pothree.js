@@ -118,7 +118,7 @@ export function* loadedNodes(pointcloud) {
  * ScreenPolygonRegion or any object with intersectsBox(worldBox3) and tester(nodeMatrixWorld)).
  * `region` null = all loaded points.
  *
- * Returns chunks, one per node with hits: {pointcloud, node, name, indices: Uint32Array}.
+ * Returns chunks, one per node with hits: {pointcloud, node, name, pointCount, indices: Uint32Array}.
  * `node.geometryNode.geometry.attributes` has the point attributes, `node.sceneNode.matrixWorld`
  * maps positions to world space (see worldPositions).
  */
@@ -128,29 +128,56 @@ export function queryPoints(pointclouds, region = null, {filter = null} = {}) {
 	for (const pointcloud of [].concat(pointclouds)) {
 		pointcloud.updateMatrixWorld(true);
 		for (const node of loadedNodes(pointcloud)) {
-			if (region) {
-				worldBox.copy(node.getBoundingBox()).applyMatrix4(pointcloud.matrixWorld);
-				if (!region.intersectsBox(worldBox)) continue;
-			}
-			const position = node.geometryNode.geometry.attributes.position;
-			const count = node.geometryNode.geometry.drawRange.count === Infinity
-				? position.count
-				: Math.min(position.count, node.geometryNode.geometry.drawRange.count);
-			const p = position.array;
-			const test = region ? region.tester(node.sceneNode.matrixWorld) : null;
-			const hits = new Uint32Array(count);
-			let n = 0;
-			for (let i = 0; i < count; i++) {
-				if (test && !test(p[3 * i], p[3 * i + 1], p[3 * i + 2])) continue;
-				if (filter && !filter(node, i)) continue;
-				hits[n++] = i;
-			}
-			if (n > 0) {
-				chunks.push({pointcloud, node, name: node.geometryNode.name, indices: hits.slice(0, n)});
-			}
+			const chunk = queryNode(pointcloud, node, region, filter, worldBox);
+			if (chunk) chunks.push(chunk);
 		}
 	}
 	return chunks;
+}
+
+/**
+ * queryPoints that gives the browser a chance to render and handle input every ~8 ms, so a query over
+ * tens of millions of points does not freeze the page (it runs between frames, node by node).
+ * Workers would have to copy the point data first, which costs more than the query itself.
+ */
+export async function queryPointsAsync(pointclouds, region = null, {filter = null} = {}) {
+	const chunks = [];
+	const worldBox = new THREE.Box3();
+	let sliceStart = performance.now();
+	for (const pointcloud of [].concat(pointclouds)) {
+		pointcloud.updateMatrixWorld(true);
+		for (const node of [...loadedNodes(pointcloud)]) {
+			if (performance.now() - sliceStart > 8) {
+				await new Promise(resolve => setTimeout(resolve, 0));
+				sliceStart = performance.now();
+				if (!node.geometryNode.geometry) continue; // unloaded meanwhile
+			}
+			const chunk = queryNode(pointcloud, node, region, filter, worldBox);
+			if (chunk) chunks.push(chunk);
+		}
+	}
+	return chunks;
+}
+
+function queryNode(pointcloud, node, region, filter, worldBox) {
+	if (region) {
+		worldBox.copy(node.getBoundingBox()).applyMatrix4(pointcloud.matrixWorld);
+		if (!region.intersectsBox(worldBox)) return null;
+	}
+	const geometry = node.geometryNode.geometry;
+	const position = geometry.attributes.position;
+	const count = geometry.drawRange.count === Infinity ? position.count : Math.min(position.count, geometry.drawRange.count);
+	const p = position.array;
+	const test = region ? region.tester(node.sceneNode.matrixWorld) : null;
+	const hits = new Uint32Array(count);
+	let n = 0;
+	for (let i = 0; i < count; i++) {
+		if (test && !test(p[3 * i], p[3 * i + 1], p[3 * i + 2])) continue;
+		if (filter && !filter(node, i)) continue;
+		hits[n++] = i;
+	}
+	// no copy when every point matched (large selections allocate hundreds of MB otherwise)
+	return n > 0 ? {pointcloud, node, name: node.geometryNode.name, pointCount: position.count, indices: n === count ? hits : hits.slice(0, n)} : null;
 }
 
 /** World positions (Float64Array, xyz) of a chunk's points. */
