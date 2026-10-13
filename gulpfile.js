@@ -15,10 +15,6 @@ const {createIconsPage} = require("./src/tools/create_icons_page");
 
 
 let paths = {
-	laslaz: [
-		"build/workers/laslaz-worker.js",
-		"build/workers/lasdecoder-worker.js",
-	],
 	html: [
 		"src/viewer/potree.css",
 		"src/viewer/sidebar.html",

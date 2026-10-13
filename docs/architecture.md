@@ -178,7 +178,7 @@ clipping (box, polygon, sphere, plane). Фрагментный — форму т
 | ядро (`Potree_update_visibility.js`, `ProfileRequest.js`, `PotreeRenderer.js` и др.) | `exports.lru`, `exports.resourcePath`, `Potree.pointBudget` — работает только в UMD | шаг 2: `exports.*` → `Potree.*` (в UMD это один объект, поведение то же, но сборка больше не зависит от имени параметра обёртки). Глобальное состояние целиком — шаг 7а |
 | `src/Potree_update_visibility.js` | `camera.clone()` каждый кадр на каждое облако, результат не используется | **исправлено в шаге 2** |
 | `src/Potree_update_visibility.js` | отсев по clip box создаёт ~20 объектов three на каждый узел × каждый box каждый кадр | **исправлено в шаге 2**: фрустум clip box считается раз за кадр на пару (облако, box) — `computeClipBoxFrustum` |
-| `src/Potree_update_visibility.js` | `p.dem instanceof Potree.DEM` — класса `DEM` в коде нет; упадёт, если включить `generateDEM` | открыто |
+| `src/Potree_update_visibility.js` | `p.dem instanceof Potree.DEM` — класса `DEM` в коде нет; упадёт, если включить `generateDEM` | исправлено: блок удалён (7а.1), флаги DEM удалены (чистка мёртвого кода) |
 | `src/workers/DEMWorker.js`, `shaders/pointcloud_dynamic.*` | нигде не используются | **удалено** (решение K) |
 | `build/potree/potree.js` | не минифицирован, tree-shaking выключен | шаг 7а |
 | `src/utils/Profile.js` | линия профиля задавала цвета вершин через `THREE.VertexColors`, которого в r124 уже нет (`undefined`) — цвета не применялись | оставлено как было (линия цвета по умолчанию), комментарий в коде |

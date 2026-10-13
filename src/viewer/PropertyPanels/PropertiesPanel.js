@@ -5,12 +5,11 @@ import {PointCloudTree} from "../../PointCloudTree.js";
 import {Annotation} from "../../Annotation.js";
 import {Measure} from "../../utils/Measure.js";
 import {Profile} from "../../utils/Profile.js";
-import {Volume, BoxVolume, SphereVolume} from "../../utils/Volume.js";
+import {Volume} from "../../utils/Volume.js";
 import {CameraAnimation} from "../../modules/CameraAnimation/CameraAnimation.js";
 import {PointSizeType, PointShape, ElevationGradientRepeat} from "../../defines.js";
 import {Gradients} from "../../materials/Gradients.js";
 
-import {MeasurePanel} from "./MeasurePanel.js";
 import {DistancePanel} from "./DistancePanel.js";
 import {PointPanel} from "./PointPanel.js";
 import {AreaPanel} from "./AreaPanel.js";

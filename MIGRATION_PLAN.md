@@ -333,6 +333,8 @@ Vite: rollup уже есть, воркеры и ресурсы из gulp пер�
 - ПРИНЯТО удалить: мёртвый код (`DEMWorker`, `InterleavedBuffer`, `BitReader`, `BlurMaterial`,
   шейдеры `pointcloud_dynamic.*`/`pointcloud_sm.*`, `GeoControls`, `src/server/getPoints.php`,
   `libs/MeshLine`), Cesium (примеры + `libs/Cesium`), Arena4D (`.vpc`), `DeviceOrientationControls`.
+- ПРИНЯТО (2026‑10‑13, вторая чистка, группы А и Б): неиспользуемые файлы `libs/`, ресурсы, исходники
+  воркеров, импорты, `image_preview.php`; DEM‑флаги и методы вьюера, заглушка `flipYZ` (список — CHANGELOG).
 - ОСТАВЛЕНО: мини‑карта OpenLayers.
 - ПОД ВОПРОСОМ (не удалять без отдельного решения): ориентированные снимки, 360° панорамы,
   GeoPackage/Shapefile, экспорт DXF/GeoJSON, HQ splats, переводы интерфейса (i18n), узлы LAS/LAZ

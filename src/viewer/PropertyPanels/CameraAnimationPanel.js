@@ -1,5 +1,4 @@
 
-import {Utils} from "../../utils.js";
 import {state} from "../../state.js";
 
 export class CameraAnimationPanel{

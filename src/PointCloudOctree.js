@@ -154,7 +154,6 @@ export class PointCloudOctree extends PointCloudTree {
 		this.visibleBounds = new THREE.Box3();
 		this.visibleNodes = [];
 		this.visibleGeometry = [];
-		this.generateDEM = false;
 		this.profileRequests = [];
 		this.name = '';
 		this._visible = true;

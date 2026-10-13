@@ -1,7 +1,6 @@
 
 import * as THREE from "three";
 import { EventDispatcher } from "../../EventDispatcher.js";
-import {TextSprite} from "../../TextSprite.js";
 import {Utils} from "../../utils.js";
 
 let sg = new THREE.SphereGeometry(1, 8, 8);

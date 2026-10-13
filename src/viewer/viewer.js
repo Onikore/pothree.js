@@ -131,9 +131,6 @@ export class Viewer extends EventDispatcher{
 		this.server = null;
 
 		this.fov = 60;
-		this.isFlipYZ = false;
-		this.useDEMCollisions = false;
-		this.generateDEM = false;
 		this.minNodeSize = 30;
 		this.edlStrength = 1.0;
 		this.edlRadius = 1.4;
@@ -600,17 +597,6 @@ export class Viewer extends EventDispatcher{
 		return this.showAnnotations;
 	}
 	
-	setDEMCollisionsEnabled(value){
-		if(this.useDEMCollisions !== value){
-			this.useDEMCollisions = value;
-			this.dispatchEvent({'type': 'use_demcollisions_changed', 'viewer': this});
-		};
-	};
-
-	getDEMCollisionsEnabled () {
-		return this.useDEMCollisions;
-	};
-
 	setEDLEnabled (value) {
 		value = Boolean(value) && Features.SHADER_EDL.isSupported();
 
@@ -978,13 +964,6 @@ export class Viewer extends EventDispatcher{
 		this.fitToScreen();
 	};
 
-	flipYZ () {
-		this.isFlipYZ = !this.isFlipYZ;
-
-		// TODO flipyz
-		console.log('TODO');
-	}
-	
 	setCameraMode(mode){
 		this.scene.cameraMode = mode;
 
@@ -1599,7 +1578,6 @@ export class Viewer extends EventDispatcher{
 		for (let pointcloud of visiblePointClouds) {
 
 			pointcloud.showBoundingBox = this.showBoundingBox;
-			pointcloud.generateDEM = this.generateDEM;
 			pointcloud.minimumNodePixelSize = this.minNodeSize;
 
 			let material = pointcloud.material;

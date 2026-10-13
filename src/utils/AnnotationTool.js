@@ -2,7 +2,6 @@
 import * as THREE from "three";
 import {Annotation} from "../Annotation.js";
 import {Utils} from "../utils.js";
-import {CameraMode} from "../defines.js";
 import {EventDispatcher} from "../EventDispatcher.js";
 
 export class AnnotationTool extends EventDispatcher{

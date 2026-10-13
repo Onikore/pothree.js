@@ -51,6 +51,17 @@ three.js r186 (`three@0.186.1`) — последняя стабильная ве
   (примеры `cesium_*.html`, `annotation_hierarchy.html` и `libs/Cesium`, 13 МБ).
 - Неиспользуемый код: `GeoControls`, `DEMWorker`, `InterleavedBuffer`, `BitReader`, `BlurMaterial`,
   шейдеры `pointcloud_dynamic.*`, `pointcloud_sm.*`, `blur.*`, `src/server/getPoints.php`, `libs/MeshLine`.
+- Вторая чистка (2026‑10‑13):
+  - **`viewer.setDEMCollisionsEnabled()` / `getDEMCollisionsEnabled()`**, поля `viewer.useDEMCollisions`,
+    `viewer.generateDEM`, `pointcloud.generateDEM` — их ничто не читало (DEM в коде не было);
+    **`viewer.flipYZ()`** и `viewer.isFlipYZ` — заглушка, печатала «TODO».
+  - `resources/icons/image_preview.php` — PHP‑скрипт со списком файлов папки, уезжал в `build/`.
+  - Неиспользуемые файлы: исходники воркеров `src/workers/LASLAZWorker.js` и `LazLoaderWorker.js`
+    (настоящий `LASLAZWorker` собирается из `libs/plasio/workers/`), `libs/stats.js/`,
+    `libs/other/dat.gui.min.js`, `libs/other/stats.min.js`, `libs/brotli/{decode.min.js, decode_test.js,
+    polyfill.js, BUILD, WORKSPACE}`, `libs/plasio/vendor/bluebird.js` (~420 КБ); 21 иконка, картинки
+    VR‑помощи, `child_indices.svg`, старый скайбокс `resources/textures/skybox/` (~1,1 МБ, копировались в
+    `build/`); `paths.laslaz` в `gulpfile.js`; 11 неиспользуемых импортов.
 
 ### Исправлено
 
