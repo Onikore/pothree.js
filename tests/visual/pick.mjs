@@ -13,12 +13,13 @@ import http from "node:http";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import pw from "playwright";
+import {chromiumArgs, gpu} from "../browser.mjs"; // SwiftShader, or the real GPU with --gpu
 import {exposePotree} from "../potreeGlobal.mjs";
 import {cacheRemote} from "../remoteCache.mjs"; // remote example data from disk after the first run
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
-const baselineFile = path.join(here, "baseline", "pick.json");
+const baselineFile = path.join(here, gpu ? "baseline-gpu" : "baseline", "pick.json"); // GPU rasterizes points slightly differently: own baseline
 const views = JSON.parse(fs.readFileSync(path.join(here, "baseline", "baseline.json"), "utf8"));
 
 const args = process.argv.slice(2);
@@ -45,7 +46,7 @@ const server = http.createServer((req, res) => {
 	});
 });
 await new Promise(r => server.listen(0, "127.0.0.1", r));
-const browser = await pw.chromium.launch({args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]});
+const browser = await pw.chromium.launch({args: chromiumArgs});
 
 async function pickGrid(name) {
 	const page = await browser.newPage({viewport: {width: 1280, height: 800}});

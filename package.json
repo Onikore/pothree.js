@@ -23,7 +23,7 @@
     "postinstall": "npm run build",
     "test": "node tests/visual/run.mjs --jobs 2 && node tests/visual/pick.mjs && node tests/visual/operations.mjs && node tests/visual/ondemand.mjs",
     "test:quick": "node tests/visual/run.mjs --gpu --group quick --jobs 2",
-    "test:gpu": "node tests/visual/run.mjs --gpu --jobs 2"
+    "test:gpu": "node tests/visual/run.mjs --gpu --jobs 2 && node tests/visual/pick.mjs --gpu && node tests/visual/operations.mjs --gpu && node tests/visual/ondemand.mjs --gpu"
   },
   "dependencies": {
     "gulp": "^4.0.2",

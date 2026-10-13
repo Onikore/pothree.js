@@ -11,6 +11,7 @@ import http from "node:http";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import pw from "playwright";
+import {chromiumArgs} from "../browser.mjs"; // SwiftShader, or the real GPU with --gpu
 import {PNG} from "pngjs";
 import pixelmatch from "pixelmatch";
 import {exposePotree} from "../potreeGlobal.mjs";
@@ -37,7 +38,7 @@ const server = http.createServer((req, res) => {
 	});
 });
 await new Promise(r => server.listen(0, "127.0.0.1", r));
-const browser = await pw.chromium.launch({args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]});
+const browser = await pw.chromium.launch({args: chromiumArgs});
 
 const failures = [];
 const check = (name, ok, what) => { console.log(`${ok ? "passed" : "FAILED"}  ${name}: ${what}`); if (!ok) failures.push(`${name}: ${what}`); };
@@ -51,14 +52,17 @@ for (const name of EXAMPLES) {
 	await page.evaluate(async () => { window.THREE_ = await import("three"); });
 	await page.waitForFunction(() => window.viewer && viewer.scene.pointclouds.length > 0, null, {timeout: 120_000});
 
+	// wait for n rendered frames (an edit shows up in the next frame) - not a fixed time, which had to
+	// be long enough for SwiftShader and was mostly idle on the GPU
+	const frames = (n = 3) => page.evaluate(n => new Promise(r => { let k = 0; const f = () => (++k >= n ? r() : requestAnimationFrame(f)); requestAnimationFrame(f); }), n);
 	const settle = async () => {
 		let last = "", since = Date.now();
-		for (const start = Date.now(); Date.now() - start < 120_000 && Date.now() - since < 3000;) {
-			await page.waitForTimeout(500);
+		for (const start = Date.now(); Date.now() - start < 120_000 && Date.now() - since < 1500;) {
+			await page.waitForTimeout(250);
 			const s = await page.evaluate(() => JSON.stringify([Potree.numNodesLoading, viewer.scene.pointclouds.map(pc => pc.visibleNodes.length)]));
 			if (s !== last) { last = s; since = Date.now(); }
 		}
-		await page.waitForTimeout(1000);
+		await frames(5);
 	};
 	const shot = async () => PNG.sync.read(await page.screenshot());
 	const diff = (a, b) => pixelmatch(a.data, b.data, null, a.width, a.height, {threshold: 0.05}) / (a.width * a.height);
@@ -97,14 +101,14 @@ for (const name of EXAMPLES) {
 	check(name, q.fast === q.inside && q.inside > 0 && q.inside < q.all, `query box = brute force (${q.fast} / ${q.inside} of ${q.all})`);
 
 	await page.evaluate(() => viewer.operations.run("selection.region", {region: __region}));
-	await page.waitForTimeout(1500);
+	await frames();
 	const stats = await run("selection.stats");
 	check(name, stats.count === q.inside, `selection count ${stats.count}`);
 	const selected = await shot();
 	check(name, diff(original, selected) > 0.001, `selection is highlighted (diff ${(diff(original, selected) * 100).toFixed(2)}%)`);
 
 	await run("selection.hide");
-	await page.waitForTimeout(1500);
+	await frames();
 	const hidden = await shot();
 	const hiddenCount = await page.evaluate(() => viewer.scene.pointclouds[0].editLayer.count(Potree.EditFlags.HIDDEN));
 	check(name, hiddenCount === q.inside && (await run("selection.stats")).count === 0, `hide: ${hiddenCount} hidden, selection empty`);
@@ -112,13 +116,13 @@ for (const name of EXAMPLES) {
 
 	await run("edits.undo");
 	await run("edits.undo");
-	await page.waitForTimeout(1500);
+	await frames();
 	const undone = await shot();
 	check(name, diff(original, undone) === 0, `undo x2 restores the image (diff ${(diff(original, undone) * 100).toFixed(3)}%)`);
 
 	await run("edits.redo");
 	await run("edits.redo");
-	await page.waitForTimeout(1500);
+	await frames();
 	check(name, diff(hidden, await shot()) === 0, "redo x2 = hidden image");
 
 	// classification of the selected points
@@ -160,15 +164,15 @@ for (const name of EXAMPLES) {
 
 	// unload and reload all nodes: the edits come back
 	await run("selection.hide");
-	await page.waitForTimeout(1500);
+	await frames();
 	const hidden2 = await shot();
 	await page.evaluate(() => { viewer.setFreeze(false); window.__budget = viewer.getPointBudget(); viewer.setPointBudget(1000); });
-	await page.waitForTimeout(4000);
+	await frames(20); // low budget: visibility update drops the nodes from the scene
 	const unloaded = await page.evaluate(() => { Potree.state.lru.freeMemory(); return Potree.state.lru.numPoints; });
 	await page.evaluate(() => viewer.setPointBudget(__budget));
 	await settle();
 	await page.evaluate(() => viewer.setFreeze(true));
-	await page.waitForTimeout(1500);
+	await frames();
 	const reloaded = await shot();
 	check(name, diff(hidden2, reloaded) < 0.002, `edits after unload (${unloaded} points left loaded) and reload (diff ${(diff(hidden2, reloaded) * 100).toFixed(3)}%)`);
 

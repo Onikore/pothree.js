@@ -9,6 +9,7 @@ import http from "node:http";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import pw from "playwright";
+import {chromiumArgs} from "../browser.mjs"; // SwiftShader, or the real GPU with --gpu
 import {PNG} from "pngjs";
 import pixelmatch from "pixelmatch";
 import {exposePotree} from "../potreeGlobal.mjs";
@@ -23,7 +24,7 @@ const server = http.createServer((req, res) => {
 		: res.writeHead(200, {"Content-Type": MIME[path.extname(file)] ?? "application/octet-stream"}).end(data));
 });
 await new Promise(r => server.listen(0, "127.0.0.1", r));
-const browser = await pw.chromium.launch({args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]});
+const browser = await pw.chromium.launch({args: chromiumArgs});
 const page = await browser.newPage({viewport: {width: 1280, height: 800}});
 await cacheRemote(page);
 await page.goto(`http://127.0.0.1:${server.address().port}/examples/lion.html`);

@@ -166,8 +166,8 @@ node tests/visual/pick.mjs --update     снять эталон (на исход
 | Команда | Что | Время (RTX 4050, тёплый кэш) |
 |---|---|---|
 | `npm run test:quick` | `run.mjs --gpu --group quick`: lion, potree2, ept, copc, classifications, clipping_volume, measurements, load_project | 17 с |
-| `npm run test:gpu` | весь визуальный набор на видеокарте | 90 с |
-| `npm test` | эталонный набор на SwiftShader + picking + операции + рендер по требованию | ~15 мин |
+| `npm run test:gpu` | весь визуальный набор + picking + операции + рендер по требованию на видеокарте | 139 с |
+| `npm test` | то же на SwiftShader (эталон; так же гоняет CI, `.github/workflows/test.yml`) | ~13 мин |
 
 `--gpu` рисует через настоящую видеокарту (ANGLE/Vulkan) вместо SwiftShader: в 7 раз быстрее, и CPU
 не греется (SwiftShader 10+ минут грузит все ядра). Эталоны свои — `tests/visual/baseline-gpu/`,
@@ -176,3 +176,14 @@ node tests/visual/pick.mjs --update     снять эталон (на исход
 `ept_binary`/`ept_zstandard` сравниваются с `ept.png` (в оригинале сломаны), `github` — с эталоном форка
 (список примеров изменился). Эталонным остаётся SwiftShader: он детерминирован на любой машине, и
 только он есть в CI без видеокарты. Во время разработки — `test:quick`, перед push — `npm test`.
+
+`--gpu` есть у всех тестов (`tests/browser.mjs` — флаги Chromium). Picking на GPU сравнивается со своим
+эталоном `baseline-gpu/pick.json` (снят с форка, как и эталон SwiftShader): растеризация точек на GPU
+чуть другая, и в 2 позициях из 125 под курсором оказывается соседняя точка. В GPU‑режиме «покой»
+визуального теста — 1 с вместо 2 с. `operations.mjs` ждёт не фиксированное время, а нарисованные кадры
+(`frames(n)`): на GPU 102 → 32 с, на SwiftShader ~200 → 106 с.
+
+**CI** (`.github/workflows/test.yml`, GitHub Actions, каждый push): `npm ci` (сборка), бюджет размера
+(`tests/size.mjs`, gzip: `potree.module.min.js` ≤ 135 КБ, `potree.module.js` ≤ 205 КБ, `potree.js` ≤ 650 КБ),
+затем эталонный набор на SwiftShader с кэшем удалённых данных между прогонами; при падении —
+скриншоты и диффы в артефакте `visual-output`.

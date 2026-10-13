@@ -21,6 +21,7 @@ import http from "node:http";
 import path from "node:path";
 import {fileURLToPath} from "node:url";
 import pw from "playwright";
+import {chromiumArgs, gpu} from "../browser.mjs"; // SwiftShader, or the real GPU with --gpu
 import pixelmatch from "pixelmatch";
 import {PNG} from "pngjs";
 import {cacheRemote} from "../remoteCache.mjs"; // remote example data from disk after the first run
@@ -29,7 +30,6 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
 const args = process.argv.slice(2);
 const arg = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; };
-const gpu = args.includes("--gpu");
 const baselineDir = path.join(here, gpu ? "baseline-gpu" : "baseline");
 const outputDir = path.join(here, gpu ? "output-gpu" : "output");
 const config = JSON.parse(fs.readFileSync(path.join(here, "config.json"), "utf8"));
@@ -40,7 +40,7 @@ const jobs = Number(arg("--jobs") ?? 4);
 const only = arg("--only")?.split(",") ?? (arg("--group") ? config.groups[arg("--group")] : null);
 
 const VIEWPORT = {width: 1280, height: 800};
-const SETTLE_MS = 2000;     // loading must stay idle this long
+const SETTLE_MS = gpu ? 1000 : 2000; // loading must stay idle this long (frames are ~100x faster on the GPU)
 const SETTLE_FRAMES = 30;   // ...and for this many rendered frames
 const TIMEOUT_MS = 180_000; // per example
 
@@ -228,9 +228,7 @@ async function runExample(browser, baseUrl, name, baseline) {
 const server = await serve();
 const baseUrl = `http://127.0.0.1:${server.address().port}`;
 const browser = await pw[browserName].launch({
-	args: browserName !== "chromium" ? []
-		: gpu ? ["--use-angle=vulkan", "--enable-gpu", "--ignore-gpu-blocklist", "--enable-features=Vulkan"]
-		: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
+	args: browserName === "chromium" ? chromiumArgs : [],
 });
 
 fs.mkdirSync(update ? baselineDir : outputDir, {recursive: true});
