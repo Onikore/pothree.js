@@ -31,11 +31,21 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
 
-      # point clouds of examples that load from the Potree demo server (tests/remoteCache.mjs)
-      - uses: actions/cache@v4
+      # the baselines were recorded with these fonts (Microsoft core fonts + Noto); other fonts
+      # change text rendering in sidebars and example pages by 0.5-1.3 %
+      - name: Install fonts
+        run: |
+          echo "ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true" | sudo debconf-set-selections
+          sudo apt-get install -y --no-install-recommends ttf-mscorefonts-installer fonts-noto-core fonts-noto-cjk
+          fc-match serif; fc-match sans-serif; fc-match Arial
+
+      # point clouds of examples that load from the Potree demo server (tests/remoteCache.mjs);
+      # saved even when a test fails, so the next run does not download them again
+      - name: Restore remote data cache
+        uses: actions/cache/restore@v4
         with:
           path: tests/.cache
-          key: remote-data-v1-${{ hashFiles('examples/*.html') }}
+          key: remote-data-v1-${{ github.run_id }}
           restore-keys: remote-data-v1-
 
       - name: Visual regression (SwiftShader)
@@ -49,6 +59,13 @@ jobs:
 
       - name: Render on demand
         run: node tests/visual/ondemand.mjs
+
+      - name: Save remote data cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: tests/.cache
+          key: remote-data-v1-${{ github.run_id }}
 
       - name: Upload screenshots and diffs
         if: failure()
