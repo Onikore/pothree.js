@@ -68,13 +68,39 @@ export class MapView{
 	}
 
 	showSources (show) {
-		this.sourcesLayer.setVisible(show);
-		this.sourcesLabelLayer.setVisible(show);
+		this.sourcesShown = show; // applied by init() when the map is opened later
+		if (this.sourcesLayer) {
+			this.sourcesLayer.setVisible(show);
+			this.sourcesLabelLayer.setVisible(show);
+		}
 	}
 
+	/**
+	 * True when the map has something to show: a point cloud with a projection proj4 understands.
+	 * Works before init() (OpenLayers is loaded only when the map is opened, src/lazyLibs.js), so
+	 * the viewer can show the map button as before.
+	 */
+	hasProjection () {
+		if (this.sceneProjection) return true;
+		this.projectionOk ??= new Map();
+		for (const pointcloud of this.viewer.scene.pointclouds) {
+			for (const projection of [pointcloud.projection, pointcloud.fallbackProjection]) {
+				if (!projection) continue;
+				if (!this.projectionOk.has(projection)) {
+					let ok = true;
+					try { proj4(projection, this.mapProjection); } catch (e) { ok = false; }
+					this.projectionOk.set(projection, ok);
+				}
+				if (this.projectionOk.get(projection)) return true;
+			}
+		}
+		return false;
+	}
+
+	/** Creates the OpenLayers map. Needs the `ol` global: Viewer.toggleMap loads it first. */
 	init () {
 
-		if(typeof ol === "undefined"){
+		if(typeof ol === "undefined" || this.map){
 			return;
 		}
 
@@ -317,6 +343,10 @@ export class MapView{
 		};
 
 		this.setScene(this.viewer.scene);
+
+		if (this.sourcesShown !== undefined) {
+			this.showSources(this.sourcesShown);
+		}
 	}
 
 	setScene (scene) {
@@ -723,6 +753,7 @@ export class MapView{
 	}
 
 	toggle () {
+		if (!this.elMap) return;
 		if (this.elMap.is(':visible')) {
 			this.elMap.css('display', 'none');
 			this.enabled = false;
@@ -733,7 +764,7 @@ export class MapView{
 	}
 
 	update (delta) {
-		if (!this.sceneProjection) {
+		if (!this.map || !this.sceneProjection) {
 			return;
 		}
 

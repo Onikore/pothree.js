@@ -54,7 +54,9 @@ let workers = {
 // we package them together with potree
 let lazyLibs = {
 	"geopackage": "libs/geopackage",
-	"sql.js": "libs/sql.js"
+	"sql.js": "libs/sql.js",
+	"d3": "libs/d3",
+	"openlayers3": "libs/openlayers3",
 };
 
 let shaders = [

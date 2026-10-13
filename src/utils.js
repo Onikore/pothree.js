@@ -7,6 +7,7 @@ import {Measure} from "./utils/Measure.js";
 import {PolygonClipVolume} from "./utils/PolygonClipVolume.js";
 import {state} from "./state.js";
 import {registerProjections} from "./projections.js";
+import {loadScript} from "./lazyLibs.js";
 
 export class Utils {
 	static async loadShapefileFeatures (file, callback) {
@@ -985,27 +986,9 @@ export class Utils {
 	}
 
 	static async loadScript(url){
-
-		return new Promise( resolve => {
-
-			const element = document.getElementById(url);
-
-			if(element){
-				resolve();
-			}else{
-				const script = document.createElement("script");
-
-				script.id = url;
-
-				script.onload = () => {
-					resolve();
-				};
-				script.src = url;
-
-				document.body.appendChild(script);
-			}
-		});
+		return loadScript(url); // src/lazyLibs.js: one <script> per url, resolves when it has run
 	}
+
 
 	static createSvgGradient(scheme){
 

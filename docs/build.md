@@ -68,3 +68,16 @@ jQuery, jQuery UI, proj4, OpenLayers, d3, i18next и т. д. из `libs/`.
 Отдельный вход `potree/viewer` не делали: сборщик пользователя выкидывает неиспользуемое из
 `potree.module.js` сам (tree‑shaking). Ленивые `import()` тоже не дали бы много — самый крупный
 необязательный кусок, json5, ~5 КБ gzip.
+
+## Ленивые библиотеки (`src/lazyLibs.js`)
+
+| Библиотека | Когда грузится | Откуда |
+|---|---|---|
+| d3 (`d3.min.js`) | `viewer.loadGUI()` — параллельно с `sidebar.html`, окно профиля создаётся после загрузки | `build/potree/lazylibs/d3/` |
+| OpenLayers (`ol.js`) | первое открытие мини‑карты (`viewer.toggleMap()`) | `build/potree/lazylibs/openlayers3/` |
+| geopackage, sql.js | загрузка GeoPackage | `build/potree/lazylibs/…` |
+
+Страница без GUI не грузит ни d3, ни OpenLayers; страница с GUI не грузит OpenLayers, пока карту не
+открыли (до этого кнопка карты появляется по `mapView.hasProjection()` — есть облако с проекцией,
+понятной proj4). Если глобальная `d3`/`ol` уже есть (страница подключила скрипт сама), ничего не
+грузится. `ol.css` по‑прежнему подключается страницей (4 КБ).

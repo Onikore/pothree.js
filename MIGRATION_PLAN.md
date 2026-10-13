@@ -316,6 +316,9 @@ Vite: rollup уже есть, воркеры и ресурсы из gulp пер�
 
 **E. Arena4D — ПРИНЯТО:** `src/arena4d/` мигрирует наравне со всеми. Данных для теста в `pointclouds/` нет.
 
+**L — ПРИНЯТО (2026‑10‑13, «по порядку по всем пунктам»):** OpenLayers и d3 грузятся по требованию
+(`src/lazyLibs.js`, `docs/build.md`); i18next, tween, jQuery UI, jstree остаются — нужны GUI сразу.
+
 **F. WebGLRenderer, а не WebGPURenderer — ПРИНЯТО.** В r186 есть `three/webgpu` с compute‑шейдерами (очень быстрые
 операции над всеми точками на GPU), но он не поддерживает `RawShaderMaterial`/GLSL: все шейдеры
 пришлось бы переписать на TSL. Предлагаю WebGLRenderer сейчас; возможности шейдера изолированы

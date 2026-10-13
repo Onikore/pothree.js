@@ -37,6 +37,7 @@ import {GeoPackageLoader} from "../loader/GeoPackageLoader.js";
 import {state} from "../state.js";
 import {loadProject} from "./LoadProject.js";
 import {saveProject} from "./SaveProject.js";
+import {loadD3, loadOpenLayers} from "../lazyLibs.js";
 
 
 export class Viewer extends EventDispatcher{
@@ -1145,13 +1146,19 @@ export class Viewer extends EventDispatcher{
 		}
 	};
 
-	toggleMap () {
-		// let map = $('#potree_map');
-		// map.toggle(100);
-
-		if (this.mapView) {
-			this.mapView.toggle();
+	async toggleMap () {
+		if (!this.mapView) return;
+		if (!this.mapView.map) {
+			// OpenLayers (~500 KB) is loaded the first time the map is opened (src/lazyLibs.js)
+			try {
+				await loadOpenLayers();
+			} catch (e) {
+				this.postError(e.message, {duration: 5000});
+				return;
+			}
+			this.mapView.init();
 		}
+		this.mapView.toggle();
 	};
 
 	onGUILoaded(callback){
@@ -1180,6 +1187,9 @@ export class Viewer extends EventDispatcher{
 			this.onGUILoaded(callback);
 		}
 
+		// d3 (profile window) is only needed with the GUI; fetched in parallel with sidebar.html
+		const d3Loaded = loadD3().catch(e => console.error("profile window unavailable:", e));
+
 		let viewer = this;
 		let sidebarContainer = $('#potree_sidebar_container');
 		sidebarContainer.load(new URL(state.scriptPath + '/sidebar.html').href, () => {
@@ -1205,8 +1215,8 @@ export class Viewer extends EventDispatcher{
 			elButtons.append(imgMapToggle);
 
 
+			// created now, initialized (and OpenLayers loaded) when the map is opened: toggleMap
 			this.mapView = new MapView(this);
-			this.mapView.init();
 
 			i18n.init({
 				lng: 'en',
@@ -1230,7 +1240,8 @@ export class Viewer extends EventDispatcher{
 				//	$(callback);
 				//}
 
-				let elProfile = $('<div>').load(new URL(state.scriptPath + '/profile.html').href, () => {
+				let elProfile = $('<div>').load(new URL(state.scriptPath + '/profile.html').href, async () => {
+					await d3Loaded;
 					$(document.body).append(elProfile.children());
 					this.profileWindow = new ProfileWindow(this);
 					this.profileWindowController = new ProfileWindowController(this);
@@ -1815,7 +1826,7 @@ export class Viewer extends EventDispatcher{
 		
 		if(this.mapView){
 			this.mapView.update(delta);
-			if(this.mapView.sceneProjection && !this._mapToggleShown){
+			if(!this._mapToggleShown && this.mapView.hasProjection()){
 				// once, not every frame (jQuery DOM access showed up in frame profiles)
 				$( "#potree_map_toggle" ).css("display", "block");
 				this._mapToggleShown = true;
