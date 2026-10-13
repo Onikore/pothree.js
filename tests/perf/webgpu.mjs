@@ -13,6 +13,7 @@ import http from "node:http"; import fs from "node:fs"; import path from "node:p
 import {fileURLToPath} from "node:url";
 import pw from "playwright";
 import {exposePotree} from "../potreeGlobal.mjs";
+import {cacheRemote} from "../remoteCache.mjs"; // remote example data from disk after the first run
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const MIME = {".html":"text/html",".js":"text/javascript",".mjs":"text/javascript",".css":"text/css",".json":"application/json",".png":"image/png",".jpg":"image/jpeg",".svg":"image/svg+xml"};
 const server = http.createServer((req, res) => { const f = path.join(root, decodeURIComponent(new URL(req.url,"http://x").pathname));
@@ -21,6 +22,7 @@ await new Promise(r => server.listen(0, "127.0.0.1", r));
 const browser = await pw.chromium.launch({args: ["--enable-unsafe-webgpu","--enable-gpu","--ignore-gpu-blocklist","--use-angle=vulkan",
   "--enable-features=Vulkan,VulkanFromANGLE,DefaultANGLEVulkan","--use-vulkan=native","--disable-gpu-vsync","--disable-frame-rate-limit"]});
 const page = await browser.newPage({viewport: {width: 1280, height: 800}});
+await cacheRemote(page);
 page.on("pageerror", e => console.log("pageerror", e.message));
 page.on("console", m => m.type() === "error" && console.log("console", m.text().slice(0, 300)));
 await page.goto(`http://127.0.0.1:${server.address().port}/examples/ca13.html`);

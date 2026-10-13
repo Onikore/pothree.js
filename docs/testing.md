@@ -143,3 +143,15 @@ node tests/visual/pick.mjs --update     снять эталон (на исход
 снимках зануляются). Сейчас: сайдбар ниже блока Clipping (300 × 395 px слева) в 10 примерах с
 раскрытым меню Tools — в нём новый блок Selection сдвигает всё ниже; в `embedded_iframe` — тот же
 участок внутри iframe. Облако в этих примерах сравнивается как прежде.
+
+## Кэш удалённых данных
+
+Многие примеры берут облака с демо‑сервера Potree (`http://5.9.65.151/mschuetz/...`). Тесты
+(`run.mjs`, `pick.mjs`, `operations.mjs`, `ondemand.mjs`, `perf/bench|frame|leak|webgpu.mjs`) хранят
+ответы этого сервера в `tests/.cache/remote/` (не в git, `tests/remoteCache.mjs`): файл скачивается
+браузером один раз, дальше отдаётся с диска. Быстрее (picking `classifications`: 24,6 → 15,1 с),
+без трафика и без зависимости от чужого сервера. `NO_CACHE=1` — мимо кэша, `rm -rf tests/.cache` —
+сбросить. `perf/load.mjs` кэш не использует (мерит загрузку по сети).
+
+Программные GPU для тестов (2026‑10‑13, `classifications`, 2 млн точек): SwiftShader — загрузка
+6,9 с / 5,6 FPS, llvmpipe — 10,5 с / 4,4 FPS, lavapipe — 18,4 с / 1,8 FPS. Оставлен SwiftShader.

@@ -12,6 +12,7 @@ import pw from "playwright";
 import {PNG} from "pngjs";
 import pixelmatch from "pixelmatch";
 import {exposePotree} from "../potreeGlobal.mjs";
+import {cacheRemote} from "../remoteCache.mjs"; // remote example data from disk after the first run
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const MIME = {".html": "text/html", ".js": "text/javascript", ".mjs": "text/javascript", ".css": "text/css",
@@ -24,6 +25,7 @@ const server = http.createServer((req, res) => {
 await new Promise(r => server.listen(0, "127.0.0.1", r));
 const browser = await pw.chromium.launch({args: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader"]});
 const page = await browser.newPage({viewport: {width: 1280, height: 800}});
+await cacheRemote(page);
 await page.goto(`http://127.0.0.1:${server.address().port}/examples/lion.html`);
 await exposePotree(page);
 await page.waitForFunction(() => window.viewer && viewer.scene.pointclouds.length > 0, null, {timeout: 120_000});

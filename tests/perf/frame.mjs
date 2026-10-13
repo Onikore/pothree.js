@@ -15,6 +15,7 @@ import path from "node:path";
 import {fileURLToPath} from "node:url";
 import pw from "playwright";
 import {exposePotree} from "../potreeGlobal.mjs";
+import {cacheRemote} from "../remoteCache.mjs"; // remote example data from disk after the first run
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const name = process.argv[2] ?? "ca13";
@@ -46,6 +47,7 @@ const glArgs = process.env.GL === "nvidia"
 if (process.env.UNCAPPED === "1") glArgs.push("--disable-gpu-vsync", "--disable-frame-rate-limit");
 const browser = await pw.chromium.launch({args: glArgs});
 const page = await browser.newPage({viewport: {width: 1280, height: 800}});
+await cacheRemote(page);
 await page.goto(`http://127.0.0.1:${server.address().port}/examples/${name}.html`);
 await exposePotree(page);
 await page.waitForFunction(() => window.viewer || window.potreeViewer);

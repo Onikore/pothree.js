@@ -19,6 +19,7 @@ import {fileURLToPath} from "node:url";
 import pw from "playwright";
 import pixelmatch from "pixelmatch";
 import {PNG} from "pngjs";
+import {cacheRemote} from "../remoteCache.mjs"; // remote example data from disk after the first run
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
@@ -153,6 +154,7 @@ async function runExample(browser, baseUrl, name, baseline) {
 	if (cfg.skip) return {...result, status: "skipped", reason: cfg.skip};
 
 	const context = await browser.newContext({viewport: VIEWPORT, deviceScaleFactor: 1});
+	await cacheRemote(context);
 	const page = await context.newPage();
 	page.on("console", m => { if (m.type() === "error" || m.type() === "warning") result.console.push(`${m.type()}: ${m.text()}`); });
 	page.on("pageerror", e => result.errors.push(String(e)));

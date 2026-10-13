@@ -14,6 +14,7 @@ import pw from "playwright";
 import {PNG} from "pngjs";
 import pixelmatch from "pixelmatch";
 import {exposePotree} from "../potreeGlobal.mjs";
+import {cacheRemote} from "../remoteCache.mjs"; // remote example data from disk after the first run
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const args = process.argv.slice(2);
@@ -43,6 +44,7 @@ const check = (name, ok, what) => { console.log(`${ok ? "passed" : "FAILED"}  ${
 
 for (const name of EXAMPLES) {
 	const page = await browser.newPage({viewport: {width: 1280, height: 800}});
+	await cacheRemote(page);
 	page.on("pageerror", e => check(name, false, "page error " + e.message));
 	await page.goto(`http://127.0.0.1:${server.address().port}/examples/${name}.html`);
 	await exposePotree(page);

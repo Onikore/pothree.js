@@ -32,3 +32,4 @@ libs/CesiumUnminified
 /pointclouds/helimap_epalinges
 pointclouds/F
 /tests/visual/output
+/tests/.cache
