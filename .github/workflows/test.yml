@@ -1,0 +1,59 @@
+# Build + size budget + the reference test suite (SwiftShader, see docs/testing.md) on every push.
+name: test
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install and build
+        run: npm ci   # postinstall runs npm run build
+
+      - name: Size budget
+        run: node tests/size.mjs
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      # point clouds of examples that load from the Potree demo server (tests/remoteCache.mjs)
+      - uses: actions/cache@v4
+        with:
+          path: tests/.cache
+          key: remote-data-v1-${{ hashFiles('examples/*.html') }}
+          restore-keys: remote-data-v1-
+
+      - name: Visual regression (SwiftShader)
+        run: node tests/visual/run.mjs --jobs 4
+
+      - name: Picking
+        run: node tests/visual/pick.mjs
+
+      - name: Operations
+        run: node tests/visual/operations.mjs
+
+      - name: Render on demand
+        run: node tests/visual/ondemand.mjs
+
+      - name: Upload screenshots and diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-output
+          path: tests/visual/output
+          retention-days: 7
