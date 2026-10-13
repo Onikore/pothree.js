@@ -18,8 +18,8 @@ uniform float fov;
 uniform float uSpacing;
 uniform float near;
 uniform float far;
-uniform vec4 uNodeData; // see pointcloud.vs
-#define uPCIndex uNodeData.z
+flat in float vPCIndex; // see pointcloud.vs
+#define uPCIndex vPCIndex
 uniform float uScreenWidth;
 uniform float uScreenHeight;
 

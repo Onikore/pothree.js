@@ -44,10 +44,15 @@ export class PointCloudRenderer {
 		// as a method of the THREE.Points, so `this` is the scene node here
 		const pointCloudRenderer = this;
 		this.nodeHook = function (renderer, scene, camera, geometry) {
-			pointCloudRenderer.onBeforeRenderNode(this.userData.potreeNode, geometry);
+			pointCloudRenderer.onBeforeRenderNode(this.userData.potreeNode, geometry, camera);
 		};
 
 		this.tmpMatrix = new THREE.Matrix4();
+
+		// node data texture capacity in nodes, shared by all render materials so that a node's slot
+		// stays valid in every pass (see assignSlots)
+		this.nodeCapacity = 0;
+		this.slotUsed = new Uint8Array(0);
 	}
 
 	/** Point cloud trees below `scene` that are visible (same as the legacy renderer). */
@@ -137,11 +142,18 @@ export class PointCloudRenderer {
 		this.updateBlending(rm, material, params);
 		this.updateOctreeUniforms(rm, material, octree, camera, target, params, view, viewInv, proj, projInv, shadowMaps);
 
-		if (!rm.uniforms.uNodeData) {
-			rm.uniforms.uNodeData = {value: new THREE.Vector4()}; // level, vnStart, pcIndex, spacing
+		if (!rm.uniforms.uNodeTexture) {
+			rm.uniforms.uOctreeWorld = {value: new THREE.Matrix4()};
+			rm.uniforms.uOctreeModelView = {value: new THREE.Matrix4()};
+			rm.uniforms.uNodeTexture = {value: null};
 		}
-		if (!rm.uniforms.uDebug) {
-			rm.uniforms.uDebug = {value: false};
+		if (nodes.length > this.nodeCapacity) {
+			// 3 texels per node, rows of 2048; headroom so it is not re-created every few nodes
+			this.nodeCapacity = Math.floor(Math.ceil(nodes.length * 3 / 2048) * 2 * 2048 / 3);
+		}
+		let nodeTexture = rm.uniforms.uNodeTexture.value;
+		if (!nodeTexture || nodeTexture.userData.capacity < this.nodeCapacity) {
+			this.createNodeTexture(rm);
 		}
 		if (shadowMaps.length > 0) {
 			let size = 16 * shadowMaps.length;
@@ -151,7 +163,7 @@ export class PointCloudRenderer {
 		}
 
 		this.state = {
-			octree, material, rm, shadowMaps, visibilityTextureData, view,
+			octree, nodes, material, rm, shadowMaps, visibilityTextureData, view,
 			uniforms: rm.uniforms,
 			clipPolygons: material.clipPolygons || [],
 			perOctreeDone: false,
@@ -178,6 +190,7 @@ export class PointCloudRenderer {
 			}
 			data.pcIndex = i;
 		}
+		this.assignSlots(nodes);
 
 		// Normally `nodes` are the octree's visible nodes, which are exactly the visible scene nodes.
 		// For a subset (picking: nodes on a ray) hide the others during the call. Visible nodes form a
@@ -229,6 +242,92 @@ export class PointCloudRenderer {
 	 * budgets (e.g. 50M points with small nodes) exceed that and the frame threw a RangeError.
 	 * A texture's size cannot change after first use in three.js, so a new one is created.
 	 */
+	/**
+	 * Node data texture of a render material (see pointcloud.vs): RGBA32F, 2048 texels per row,
+	 * 3 texels per node slot, this.nodeCapacity slots.
+	 */
+	createNodeTexture(rm) {
+		const width = 2048;
+		const rows = Math.ceil(this.nodeCapacity * 3 / width);
+		const texture = new THREE.DataTexture(new Float32Array(width * rows * 4), width, rows, THREE.RGBAFormat, THREE.FloatType);
+		texture.magFilter = THREE.NearestFilter;
+		texture.minFilter = THREE.NearestFilter;
+		texture.userData.capacity = this.nodeCapacity;
+
+		if (rm.uniforms.uNodeTexture.value) {
+			rm.uniforms.uNodeTexture.value.dispose();
+		}
+		rm.uniforms.uNodeTexture.value = texture;
+	}
+
+	/**
+	 * Gives each node of a draw call a distinct slot < nodeCapacity in the node data texture. A node
+	 * keeps its slot while it stays valid, so its aSlot attribute (and three's buffer for it) changes
+	 * only when the node is first drawn or its slot was taken over by another node meanwhile.
+	 */
+	assignSlots(nodes) {
+		const capacity = this.nodeCapacity;
+		if (this.slotUsed.length < capacity) {
+			this.slotUsed = new Uint8Array(capacity);
+		} else {
+			this.slotUsed.fill(0, 0, capacity);
+		}
+		const used = this.slotUsed;
+
+		let pending = null;
+		for (let node of nodes) {
+			let attribute = node.sceneNode.geometry.attributes.aSlot;
+			let slot = attribute.array[0];
+			if (slot >= 0 && slot < capacity && !used[slot]) {
+				used[slot] = 1;
+			} else {
+				(pending ??= []).push(attribute);
+			}
+		}
+
+		if (pending) {
+			let next = 0;
+			for (let attribute of pending) {
+				while (used[next]) next++;
+				used[next] = 1;
+				attribute.array[0] = next;
+				attribute.needsUpdate = true;
+			}
+		}
+	}
+
+	/**
+	 * Writes the per-node values of all nodes of the current call into the node data texture (three
+	 * uploads it with the first node's uniforms). Called from the first node's hook, where three has
+	 * updated the node and camera matrices for this render call.
+	 */
+	fillNodeTexture(s, camera) {
+		const u = s.uniforms;
+		const texture = u.uNodeTexture.value;
+		const d = texture.image.data;
+		const v = camera.matrixWorldInverse.elements;
+		const offsets = s.visibilityTextureData ? s.visibilityTextureData.offsets : null;
+
+		for (let i = 0; i < s.nodes.length; i++) {
+			const node = s.nodes[i];
+			const sceneNode = node.sceneNode;
+			const o = sceneNode.geometry.attributes.aSlot.array[0] * 12;
+			const w = sceneNode.matrixWorld.elements;
+			const wx = w[12], wy = w[13], wz = w[14];
+
+			d[o] = node.getLevel();
+			d[o + 1] = offsets ? offsets.get(node) : 0;
+			d[o + 2] = i; // pcIndex: position in the call's node list, read back by picking
+			d[o + 3] = node.geometryNode.estimatedSpacing;
+			d[o + 4] = wx; d[o + 5] = wy; d[o + 6] = wz;
+			// view translation = (view * world) translation, in double like three's modelViewMatrix
+			d[o + 8] = v[0] * wx + v[4] * wy + v[8] * wz + v[12];
+			d[o + 9] = v[1] * wx + v[5] * wy + v[9] * wz + v[13];
+			d[o + 10] = v[2] * wx + v[6] * wy + v[10] * wz + v[14];
+		}
+		texture.needsUpdate = true;
+	}
+
 	growVisibilityTexture(material, nodeCount) {
 		const width = 2048;
 		const rows = Math.ceil(nodeCount / width) * 2; // headroom: avoid re-creating it every few nodes
@@ -513,7 +612,7 @@ export class PointCloudRenderer {
 	 * @param {PointCloudOctreeNode} node
 	 * @param {THREE.BufferGeometry} geometry the node's render geometry (see getRenderGeometry)
 	 */
-	onBeforeRenderNode(node, geometry) {
+	onBeforeRenderNode(node, geometry, camera) {
 		const s = this.state;
 		const u = s.uniforms;
 
@@ -525,20 +624,17 @@ export class PointCloudRenderer {
 				}
 			}
 		}
-		s.nodesDrawn++;
 
-		// uNodeData = (uLevel, uVNStart, uPCIndex, uNodeSpacing), see pointcloud.vs.
-		// uVNStart keeps its last value when there is no visibility texture, as before.
-		let nodeData = u.uNodeData.value;
-		nodeData.set(
-			node.getLevel(),
-			s.visibilityTextureData ? s.visibilityTextureData.offsets.get(node) : nodeData.y,
-			node.sceneNode.userData.pcIndex,
-			node.geometryNode.estimatedSpacing);
-
-		u.uDebug.value = node.debug ? true : false;
-
+		// Matrices here are current: three updated the scene and camera before calling the hook.
 		let world = node.sceneNode.matrixWorld;
+		if (s.nodesDrawn === 0) {
+			// rotation/scale shared by all nodes (they are only translated against each other); the
+			// translation columns are ignored by the shader
+			u.uOctreeWorld.value.copy(world);
+			u.uOctreeModelView.value.multiplyMatrices(camera.matrixWorldInverse, world);
+			this.fillNodeTexture(s, camera);
+		}
+		s.nodesDrawn++;
 
 		if (s.clipPolygons.length > 0) {
 			this.setClipPolygonUniforms(s, world);
@@ -570,9 +666,12 @@ export class PointCloudRenderer {
 			geometry.deleteAttribute("aExtra");
 		}
 
-		// three uploads material uniforms only when the program or material changes; all nodes
-		// share one material, so force the upload (three skips GL calls for unchanged values)
-		s.rm.uniformsNeedUpdate = true;
+		// three uploads material uniforms only when the program or material changes; all nodes share
+		// one material. Per-node uniforms are left only for clip polygons and shadow maps; force the
+		// upload just then: a uniform change between draws is expensive (see pointcloud.vs)
+		if (s.clipPolygons.length > 0 || s.shadowMaps.length > 0) {
+			s.rm.uniformsNeedUpdate = true;
+		}
 	}
 
 	setClipPolygonUniforms(s, world) {
@@ -667,6 +766,10 @@ export class PointCloudRenderer {
 					rg.setAttribute(to, geometry.attributes[from]);
 				}
 			}
+			// node data slot, see assignSlots / pointcloud.vs; kept with the node's geometry so it
+			// survives re-creating the render geometry
+			geometry.userData.slotAttribute ??= new THREE.InstancedBufferAttribute(new Float32Array([-1]), 1);
+			rg.setAttribute("aSlot", geometry.userData.slotAttribute);
 			rg.userData.sourceAttributeCount = names.length;
 			rg.userData.source = geometry;
 			this.renderGeometries.set(geometry, rg);
@@ -728,7 +831,6 @@ const SHADER_ATTRIBUTES = new Set([
 
 /** Uniforms that change from node to node (see onBeforeRenderNode); all others are per octree. */
 const PER_NODE_UNIFORMS = new Set([
-	"uNodeData", "uDebug",
 	"uClipPolygonVCount", "uClipPolygonWVP", "uClipPolygonVertices", "uShadowWorldView",
 ]);
 

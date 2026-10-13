@@ -122,7 +122,8 @@
 | внутренний материал | на каждый `PointCloudMaterial` свой `RawShaderMaterial` (`WeakMap`). В нём **только** uniforms, которые выставлял старый рендерер: остальные uniforms шейдера остаются нулями, как было |
 | `updateShader` | исходник материала + `#define` рендера; при изменении — `needsUpdate`, three берёт программу из своего кэша или компилирует |
 | `updateBlending` | непрозрачно: без смешивания, тест и запись глубины; `opacity < 1`: `SRC_ALPHA, ONE`, без глубины; `params` переопределяют |
-| `onBeforeRenderNode` | uniforms узла: `uNodeData` = (`uLevel`, `uVNStart`, `uPCIndex`, `uNodeSpacing`) одним `vec4` — один вызов GL вместо четырёх (в шейдере старые имена — макросы на компоненты), `uDebug`, clip-полигоны, тени; `uniformsNeedUpdate` |
+| данные узлов | **без поузловых uniform** (смена uniform между draw‑вызовами — самая дорогая часть отрисовки узла в ANGLE). Уровень, `vnStart`, `pcIndex`, шаг, сдвиг узла в мире и в виде — в текстуре `uNodeTexture` (RGBA32F, 3 тексела на узел), её заполняет `fillNodeTexture` с первым узлом прохода и заливает three вместе с uniforms облака. Узел находит свои тексели по атрибуту `aSlot` (один элемент, divisor 1, `assignSlots`; слот постоянен, пока его не занял другой узел). `modelMatrix`/`modelViewMatrix` шейдер собирает сам: поворот/масштаб — `uOctreeWorld`/`uOctreeModelView` раз на облако, сдвиги посчитаны на CPU в double, как у three |
+| `onBeforeRenderNode` | первый узел: матрицы облака и текстура узлов; далее только clip‑полигоны и тени (если есть — тогда `uniformsNeedUpdate`), `aExtra` |
 | `updateAttributeAliases` | один раз на геометрию: `rgba`→`color`, `return number`→`returnNumber` и т.д. (тот же `BufferAttribute`); `aExtra` — на активный «дополнительный» атрибут |
 
 Контекст — WebGL2, шейдеры `src/materials/shaders/*` — GLSL ES 3.0 (`glslVersion: THREE.GLSL3`;
@@ -135,7 +136,7 @@
 Не используются. В `src/` остались только `gl.getExtension('EXT_color_buffer_float')` (включение
 расширения) и `gl.getError()` в логе потери контекста. Единственная опора на недокументированное
 поведение three — пропуск uniform с `needsUpdate === false` при заливке (`PointCloudRenderer`,
-uniforms облака заливаются с первым узлом), проверено в r152 и r186.
+uniforms облака заливаются с первым узлом; нужно только при clip‑полигонах и тенях), проверено в r152 и r186.
 
 ## Производительность
 

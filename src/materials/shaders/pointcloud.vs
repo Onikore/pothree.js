@@ -18,8 +18,23 @@ in float gpsTime;
 in vec3 normal;
 in float aExtra;
 
-uniform mat4 modelMatrix;
-uniform mat4 modelViewMatrix;
+// No per-node uniforms: changing a uniform between draw calls is the most expensive part of a
+// node's draw under ANGLE (each change re-allocates the uniform buffer), so the per-node values
+// live in uNodeTexture, filled once per octree and pass by PointCloudRenderer. Each node's geometry
+// has a constant attribute aSlot (one element, divisor 1) that selects its 3 texels:
+//   [0] = (level, vnStart, pcIndex, spacing), [1].xyz = world translation, [2].xyz = view translation.
+// All nodes of an octree share rotation and scale (they are only translated against each other), so
+// main() assembles modelMatrix / modelViewMatrix from the per-octree uOctreeWorld / uOctreeModelView
+// (3x3 part) and the node's translations; the translations are computed in double on the CPU, as
+// three computes its matrices.
+uniform mat4 uOctreeWorld;
+uniform mat4 uOctreeModelView;
+uniform highp sampler2D uNodeTexture;
+in float aSlot;
+flat out float vPCIndex;
+mat4 modelMatrix;
+mat4 modelViewMatrix;
+vec4 nodeData;
 uniform mat4 projectionMatrix;
 uniform mat4 viewMatrix;
 uniform mat4 uViewInv;
@@ -65,13 +80,11 @@ uniform float size;
 uniform float minSize;
 uniform float maxSize;
 
-// Per-node values packed into one vec4: one uniform upload per node instead of four
-// (set by PointCloudRenderer.onBeforeRenderNode).
-uniform vec4 uNodeData;
-#define uLevel uNodeData.x
-#define uVNStart uNodeData.y
-#define uPCIndex uNodeData.z
-#define uNodeSpacing uNodeData.w
+// per-node values, read from uNodeTexture at the start of main()
+#define uLevel nodeData.x
+#define uVNStart nodeData.y
+#define uPCIndex nodeData.z
+#define uNodeSpacing nodeData.w
 uniform float uOctreeSpacing;
 uniform float uOctreeSize;
 uniform vec3 uBBSize;
@@ -887,6 +900,14 @@ void doClipping(){
 //
 
 void main() {
+	int texel = int(aSlot) * 3;
+	nodeData = texelFetch(uNodeTexture, ivec2(texel % 2048, texel / 2048), 0);
+	vec3 worldT = texelFetch(uNodeTexture, ivec2((texel + 1) % 2048, (texel + 1) / 2048), 0).xyz;
+	vec3 viewT = texelFetch(uNodeTexture, ivec2((texel + 2) % 2048, (texel + 2) / 2048), 0).xyz;
+	modelMatrix = mat4(uOctreeWorld[0], uOctreeWorld[1], uOctreeWorld[2], vec4(worldT, 1.0));
+	modelViewMatrix = mat4(uOctreeModelView[0], uOctreeModelView[1], uOctreeModelView[2], vec4(viewT, 1.0));
+	vPCIndex = uPCIndex;
+
 	vec4 mvPosition = modelViewMatrix * vec4(position, 1.0 );
 	vViewPosition = mvPosition.xyz;
 	gl_Position = projectionMatrix * mvPosition;
