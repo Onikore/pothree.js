@@ -1,17 +1,14 @@
-// window = { };
-// document = { };
-// importScripts('/libs/zstd-codec/bundle.js', '/libs/ept/ParseBuffer.js');
+/* global onmessage:true fzstd parseEpt */
+// EPT zstandard decoder worker. Built by gulp as fzstd (node_modules/fzstd/umd/index.js) +
+// libs/ept/ParseBuffer.js + this file. fzstd is a small (~25 KB) pure JS zstd decompressor; it
+// replaced zstd-codec (libs/zstd-codec, a 3 MB emscripten build, removed): worker 3.1 MB -> 15 KB,
+// decompression of lion_takanawa_ept_zst 124 -> 80 ms.
 
-onmessage = async function(event) {
-	
-	const zstd = await new Promise(resolve => window.ZstdCodec.run(resolve));
-	
-	const streaming = new zstd.Streaming();
-	const arr = new Uint8Array(event.data.buffer);
-	const decompressed = streaming.decompress(arr);
-
-	event.data.buffer = decompressed.buffer
+onmessage = function(event) {
+	const decompressed = fzstd.decompress(new Uint8Array(event.data.buffer));
+	// parseEpt reads event.data.buffer as an ArrayBuffer of exactly the point data
+	event.data.buffer = decompressed.byteOffset === 0 && decompressed.byteLength === decompressed.buffer.byteLength
+		? decompressed.buffer
+		: decompressed.slice().buffer;
 	parseEpt(event);
-	
 };
-

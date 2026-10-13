@@ -26,9 +26,10 @@ let paths = {
 };
 
 let workers = {
+	// laz-perf as WebAssembly (workers/laz-perf.wasm), like EptLaszipDecoderWorker
 	"LASLAZWorker": [
-		"libs/plasio/workers/laz-perf.js",
-		"libs/plasio/workers/laz-loader-worker.js"
+		"libs/copc/index.js",
+		"src/workers/LASLAZWorker.js"
 	],
 	"LASDecoderWorker": [
 		"src/workers/LASDecoderWorker.js"
@@ -42,8 +43,7 @@ let workers = {
 		"src/workers/EptBinaryDecoderWorker.js"
 	],
 	"EptZstandardDecoderWorker": [
-		"src/workers/EptZstandardDecoder_preamble.js",
-		'libs/zstd-codec/bundle.js',
+		"node_modules/fzstd/umd/index.js",
 		"libs/ept/ParseBuffer.js",
 		"src/workers/EptZstandardDecoderWorker.js"
 	]

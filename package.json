@@ -37,6 +37,7 @@
   "devDependencies": {
     "@rollup/plugin-node-resolve": "16.0.3",
     "@rollup/plugin-terser": "1.0.0",
+    "fzstd": "0.1.1",
     "pixelmatch": "8.0.0",
     "playwright": "1.64.0",
     "pngjs": "7.0.0",

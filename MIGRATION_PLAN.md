@@ -316,6 +316,9 @@ Vite: rollup уже есть, воркеры и ресурсы из gulp пер�
 
 **E. Arena4D — ПРИНЯТО:** `src/arena4d/` мигрирует наравне со всеми. Данных для теста в `pointclouds/` нет.
 
+**I — ПРИНЯТО (2026‑10‑13):** LAZ Potree 1.x — laz-perf WASM (из `libs/copc`), zstd — `fzstd`
+(замеры в CHANGELOG).
+
 **L — ПРИНЯТО (2026‑10‑13, «по порядку по всем пунктам»):** OpenLayers и d3 грузятся по требованию
 (`src/lazyLibs.js`, `docs/build.md`); i18next, tween, jQuery UI, jstree остаются — нужны GUI сразу.
 

@@ -81,3 +81,14 @@ jQuery, jQuery UI, proj4, OpenLayers, d3, i18next и т. д. из `libs/`.
 открыли (до этого кнопка карты появляется по `mapView.hasProjection()` — есть облако с проекцией,
 понятной proj4). Если глобальная `d3`/`ol` уже есть (страница подключила скрипт сама), ничего не
 грузится. `ol.css` по‑прежнему подключается страницей (4 КБ).
+
+## Воркеры декодирования (`gulp workers`)
+
+| Воркер | Состав | Что распаковывает |
+|---|---|---|
+| `LASLAZWorker.js` | `libs/copc/index.js` + `src/workers/LASLAZWorker.js` | LAZ узлов Potree 1.x (laz-perf WASM, `workers/laz-perf.wasm`) |
+| `LASDecoderWorker.js` | `src/workers/LASDecoderWorker.js` | точки LAS/LAZ Potree 1.x → атрибуты |
+| `EptLaszipDecoderWorker.js` | `libs/copc/index.js` + `src/workers/EptLaszipDecoderWorker.js` | EPT LAZ, COPC |
+| `EptBinaryDecoderWorker.js` | `libs/ept/ParseBuffer.js` + `src/workers/EptBinaryDecoderWorker.js` | EPT binary |
+| `EptZstandardDecoderWorker.js` | `node_modules/fzstd/umd/index.js` + `libs/ept/ParseBuffer.js` + `src/workers/EptZstandardDecoderWorker.js` | EPT zstd |
+| `BinaryDecoderWorker.js`, `2.0/DecoderWorker*.js` | rollup из `src/` | Potree 1.x bin, Potree 2.0 (brotli) |
