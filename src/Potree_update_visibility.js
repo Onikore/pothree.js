@@ -137,6 +137,8 @@ export function updateVisibility(pointclouds, camera, renderer){
 
 	let numVisibleNodes = 0;
 	let numVisiblePoints = 0;
+	// adaptive point budget (viewer.setAdaptivePointBudget): fewer points while the camera moves
+	const pointBudget = state.pointBudget * state.pointBudgetFactor;
 
 	let numVisiblePointsInPointclouds = new Map(pointclouds.map(pc => [pc, 0]));
 
@@ -220,7 +222,7 @@ export function updateVisibility(pointclouds, camera, renderer){
 		let maxLevel = pointcloud.maxLevel || Infinity;
 		let level = node.getLevel();
 		let visible = insideFrustum;
-		visible = visible && !(numVisiblePoints + node.getNumPoints() > state.pointBudget);
+		visible = visible && !(numVisiblePoints + node.getNumPoints() > pointBudget);
 		visible = visible && !(numVisiblePointsInPointclouds.get(pointcloud) + node.getNumPoints() > pointcloud.pointBudget);
 		visible = visible && level < maxLevel;
 		visible = visible || node.getLevel() <= 2;
@@ -283,7 +285,7 @@ export function updateVisibility(pointclouds, camera, renderer){
 			lowestSpacing = Math.min(lowestSpacing, node.geometryNode.spacing);
 		}
 
-		if (numVisiblePoints + node.getNumPoints() > state.pointBudget) {
+		if (numVisiblePoints + node.getNumPoints() > pointBudget) {
 			break;
 		}
 

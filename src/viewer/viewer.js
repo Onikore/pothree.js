@@ -314,6 +314,7 @@ export class Viewer extends EventDispatcher{
 		// skips update+render while nothing changes: no input, camera still, no nodes loading, no
 		// tweens. Code that changes the scene without user input calls viewer.requestRender().
 		this.renderOnDemand = false;
+		this.adaptivePointBudget = null; // setAdaptivePointBudget
 		this._framesToRender = 0;
 		this._lastFrameSignature = null;
 		for (const type of ["pointerdown", "pointermove", "pointerup", "wheel", "keydown", "keyup", "input", "change", "resize"]) {
@@ -585,6 +586,51 @@ export class Viewer extends EventDispatcher{
 
 	getPointBudget () {
 		return state.pointBudget;
+	};
+
+	/**
+	 * Adaptive point budget (off by default). While the camera moves and frames take longer than
+	 * 1000 / targetFps ms, fewer points are drawn (down to minFactor x the point budget); when the
+	 * camera stops, the full budget is back at once and the view refines. Nodes stay loaded: the
+	 * LRU limit follows the full budget. Rendering is GPU-bound on the number of points, so this is
+	 * the most direct way to keep rotating a large cloud smooth.
+	 */
+	setAdaptivePointBudget (enabled, {targetFps = 45, minFactor = 0.25} = {}) {
+		this.adaptivePointBudget = enabled ? {targetFps, minFactor} : null;
+		if (!enabled) state.pointBudgetFactor = 1;
+	};
+
+	getAdaptivePointBudget () {
+		return this.adaptivePointBudget !== null && this.adaptivePointBudget !== undefined;
+	};
+
+	updateAdaptivePointBudget (cameraMoved, delta) {
+		const a = this.adaptivePointBudget;
+		if (!a) return;
+
+		// frame time, smoothed; delta is the time between the last two frames
+		const ms = delta * 1000;
+		this._frameMs = this._frameMs === undefined ? ms : 0.8 * this._frameMs + 0.2 * ms;
+
+		if (!cameraMoved) {
+			// still for a few frames: full budget, the view refines
+			this._stillFrames = (this._stillFrames ?? 0) + 1;
+			if (this._stillFrames >= 3) state.pointBudgetFactor = 1;
+			return;
+		}
+		this._stillFrames = 0;
+
+		// adjust at most every 5 frames: the smoothed frame time lags behind a budget change
+		this._budgetFrames = (this._budgetFrames ?? 0) + 1;
+		if (this._budgetFrames < 5) return;
+		this._budgetFrames = 0;
+
+		const target = 1000 / a.targetFps;
+		if (this._frameMs > target) {
+			state.pointBudgetFactor = Math.max(a.minFactor, state.pointBudgetFactor * 0.8);
+		} else if (this._frameMs < 0.7 * target) {
+			state.pointBudgetFactor = Math.min(1, state.pointBudgetFactor * 1.1);
+		}
 	};
 
 	setShowAnnotations (value) {
@@ -1752,6 +1798,10 @@ export class Viewer extends EventDispatcher{
 				this._previousCamera = this.scene.getActiveCamera().clone();
 				this._previousCamera.rotation.copy(this.scene.getActiveCamera().rotation);
 			}
+
+			const cameraMoved = !this._previousCamera.matrixWorld.equals(camera.matrixWorld)
+				|| !this._previousCamera.projectionMatrix.equals(camera.projectionMatrix);
+			this.updateAdaptivePointBudget(cameraMoved, delta);
 
 			if(!this._previousCamera.matrixWorld.equals(camera.matrixWorld)){
 				this.dispatchEvent({

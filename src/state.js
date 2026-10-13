@@ -38,6 +38,8 @@ export const state = {
 
 	/** points drawn per frame, all point clouds together */
 	pointBudget: 1_000_000,
+	/** share of pointBudget drawn now: below 1 only while the adaptive point budget lowers it (viewer.js) */
+	pointBudgetFactor: 1,
 	/** points kept loaded (LRU), set to 2 x pointBudget by the viewer each frame */
 	pointLoadLimit: 2_000_000,
 	/** nodes being loaded right now */

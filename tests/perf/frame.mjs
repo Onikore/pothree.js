@@ -1,7 +1,7 @@
 // Whole-frame profile while the camera orbits: frame times and the hottest JS functions.
 //
 //   node tests/perf/frame.mjs [example] [seconds]          default: ca13 20
-//   env: BUDGET (default 3M), GL=nvidia (real GPU via Vulkan; default SwiftShader), UNCAPPED=1 (no vsync),
+//   env: ADAPTIVE=1 (viewer.setAdaptivePointBudget), BUDGET (default 3M), GL=nvidia (real GPU via Vulkan; default SwiftShader), UNCAPPED=1 (no vsync),
 //        ANNOTATIONS=N (add N annotations), FREEZE=1 (static camera, frozen node set)
 //
 // Waits until loading settles, then rotates the view by a fixed angle per frame (so LOD selection,
@@ -52,6 +52,7 @@ await page.goto(`http://127.0.0.1:${server.address().port}/examples/${name}.html
 await exposePotree(page);
 await page.waitForFunction(() => window.viewer || window.potreeViewer);
 await page.evaluate((budget) => { const v = window.viewer || window.potreeViewer; v.setPointBudget(budget); if (budget > 10_000_000) v.setMinNodeSize(0); }, budget);
+if (process.env.ADAPTIVE === "1") await page.evaluate(() => (window.viewer || window.potreeViewer).setAdaptivePointBudget(true)); // adaptive point budget
 
 let last = "", since = Date.now();
 for (const start = Date.now(); Date.now() - start < Number(process.env.LOAD_TIMEOUT ?? 180) * 1000;) {
