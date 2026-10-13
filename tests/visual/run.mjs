@@ -6,7 +6,11 @@
 //
 //   node tests/visual/run.mjs --update              record baseline (run on the reference code)
 //   node tests/visual/run.mjs                       compare against baseline, exit 1 on failure
-//   options: --only a,b  --browser chromium|firefox|webkit  --group formats  --jobs N (default 4)
+//   options: --only a,b  --browser chromium|firefox|webkit  --group formats|quick  --jobs N (default 4)
+//            --gpu    render on the real GPU (Vulkan) instead of SwiftShader: several times faster and
+//                     the CPU stays cool; own baselines in tests/visual/baseline-gpu/ (recorded on the
+//                     reference code with --gpu --update). SwiftShader stays the reference (CI has no GPU).
+//   --group quick: one example per data format and main feature, for checks during development.
 //
 // Baseline: tests/visual/baseline/<name>.png + baseline.json (camera, visible points, console).
 // Results:  tests/visual/output/<name>.png, <name>.diff.png, report.json.
@@ -23,12 +27,13 @@ import {cacheRemote} from "../remoteCache.mjs"; // remote example data from disk
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, "../..");
-const baselineDir = path.join(here, "baseline");
-const outputDir = path.join(here, "output");
-const config = JSON.parse(fs.readFileSync(path.join(here, "config.json"), "utf8"));
-
 const args = process.argv.slice(2);
 const arg = (name) => { const i = args.indexOf(name); return i >= 0 ? args[i + 1] : undefined; };
+const gpu = args.includes("--gpu");
+const baselineDir = path.join(here, gpu ? "baseline-gpu" : "baseline");
+const outputDir = path.join(here, gpu ? "output-gpu" : "output");
+const config = JSON.parse(fs.readFileSync(path.join(here, "config.json"), "utf8"));
+
 const update = args.includes("--update");
 const browserName = arg("--browser") ?? "chromium";
 const jobs = Number(arg("--jobs") ?? 4);
@@ -223,7 +228,9 @@ async function runExample(browser, baseUrl, name, baseline) {
 const server = await serve();
 const baseUrl = `http://127.0.0.1:${server.address().port}`;
 const browser = await pw[browserName].launch({
-	args: browserName === "chromium" ? ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"] : [],
+	args: browserName !== "chromium" ? []
+		: gpu ? ["--use-angle=vulkan", "--enable-gpu", "--ignore-gpu-blocklist", "--enable-features=Vulkan"]
+		: ["--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist"],
 });
 
 fs.mkdirSync(update ? baselineDir : outputDir, {recursive: true});

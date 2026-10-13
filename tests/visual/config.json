@@ -181,6 +181,16 @@
 			"copc",
 			"potree2",
 			"potree2_brotli"
+		],
+		"quick": [
+			"lion",
+			"potree2",
+			"ept",
+			"copc",
+			"classifications",
+			"clipping_volume",
+			"measurements",
+			"load_project"
 		]
 	}
 }

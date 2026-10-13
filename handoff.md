@@ -43,7 +43,9 @@ build, testing).
 
 ```
 npm run build
-node tests/visual/run.mjs --jobs 2            # визуальный регресс, эталон = исходный код; 41 пример + 5 пропусков
+npm run test:quick                             # 17 с: 8 примеров на видеокарте (во время разработки)
+npm run test:gpu                               # 90 с: весь визуальный набор на видеокарте
+node tests/visual/run.mjs --jobs 2            # визуальный регресс на SwiftShader (эталонный, ~11 мин); 41 пример + 5 пропусков
 node tests/visual/run.mjs --only lion,potree2
 node tests/visual/pick.mjs                     # picking, 5 примеров × 25 позиций
 node tests/visual/ondemand.mjs                 # рендер по требованию (viewer.renderOnDemand)
