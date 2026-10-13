@@ -17,6 +17,7 @@ import {Message} from "../utils/Message.js";
 import {Sidebar} from "./sidebar.js";
 
 import {AnnotationTool} from "../utils/AnnotationTool.js";
+import {Operations} from "../operations/Operations.js";
 import {MeasuringTool} from "../utils/MeasuringTool.js";
 import {ProfileTool} from "../utils/ProfileTool.js";
 import {VolumeTool} from "../utils/VolumeTool.js";
@@ -324,6 +325,19 @@ export class Viewer extends EventDispatcher{
 		this.loadGUI = this.loadGUI.bind(this);
 
 		this.annotationTool = new AnnotationTool(this);
+
+		// operations on point clouds: selection, edits, queries (src/operations, docs/operations.md)
+		this.operations = new Operations(this);
+		// undo / redo of edits: Ctrl+Z, Ctrl+Shift+Z, Ctrl+Y (not while typing in a field)
+		window.addEventListener("keydown", (e) => {
+			if (!(e.ctrlKey || e.metaKey) || e.target.closest?.("input, textarea, [contenteditable]")) return;
+			const key = e.key.toLowerCase();
+			const id = key === "z" ? (e.shiftKey ? "edits.redo" : "edits.undo") : key === "y" ? "edits.redo" : null;
+			if (id && this.scene.pointclouds.some(pc => pc.editLayer)) {
+				e.preventDefault();
+				this.operations.run(id);
+			}
+		});
 		this.measuringTool = new MeasuringTool(this);
 		this.profileTool = new ProfileTool(this);
 		this.volumeTool = new VolumeTool(this);

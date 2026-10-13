@@ -13,6 +13,8 @@
 | Сборка | rollup 4 → `build/potree/potree.module.js` (ES, `three` внешний) и `build/potree/potree.js` (UMD, глобальный `Potree`, three.js внутри) |
 | Примеры | `examples/*.html`, `import * as Potree from "potree"`; three.js и Potree — через import map, одна копия three |
 | VR/WebXR | удалён |
+| Операции | `viewer.operations`: выборка точек в области, выделение, скрытие, правка атрибутов с отменой и сохранением правок — `docs/operations.md` |
+| Рендер по требованию | `viewer.renderOnDemand = true` — в простое кадры не рисуются |
 
 ### Быстрый старт
 

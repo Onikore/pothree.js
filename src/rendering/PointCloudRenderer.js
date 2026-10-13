@@ -162,6 +162,11 @@ export class PointCloudRenderer {
 			}
 		}
 
+		let edits = octree.editLayer && octree.editLayer.active ? octree.editLayer : null;
+		if (edits) {
+			(rm.uniforms.uSelectionColor ??= {value: null}).value = edits.selectionColor;
+		}
+
 		this.state = {
 			octree, nodes, material, rm, shadowMaps, visibilityTextureData, view,
 			uniforms: rm.uniforms,
@@ -189,6 +194,9 @@ export class PointCloudRenderer {
 				sceneNode.geometry = this.getRenderGeometry(sceneNode.geometry);
 			}
 			data.pcIndex = i;
+			if (edits) {
+				edits.attachNode(node, sceneNode.geometry);
+			}
 		}
 		this.assignSlots(nodes);
 
@@ -395,6 +403,10 @@ export class PointCloudRenderer {
 			if (attributes["source id"] || attributes["point source id"]) {
 				defines.push("#define clip_point_source_id_enabled");
 			}
+		}
+
+		if (octree.editLayer && octree.editLayer.active) {
+			defines.push("#define use_edits"); // aEdit flags, see src/operations/EditLayer.js
 		}
 
 		let definesString = defines.join("\n");
@@ -826,7 +838,7 @@ export class PointCloudRenderer {
 /** Attributes declared in src/materials/shaders/pointcloud.vs. */
 const SHADER_ATTRIBUTES = new Set([
 	"position", "color", "intensity", "classification", "returnNumber", "numberOfReturns",
-	"pointSourceID", "indices", "spacing", "gpsTime", "normal", "aExtra",
+	"pointSourceID", "indices", "spacing", "gpsTime", "normal", "aExtra", "aEdit",
 ]);
 
 /** Uniforms that change from node to node (see onBeforeRenderNode); all others are per octree. */

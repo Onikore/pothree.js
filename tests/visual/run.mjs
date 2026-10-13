@@ -127,10 +127,20 @@ async function setView(page, view) {
 	})()`);
 }
 
-function compare(name, actualPng) {
+// ignore: [[x, y, width, height], ...] from config.json - regions with an intended change against the
+// original (e.g. new sidebar controls); blanked in both images before comparing
+function compare(name, actualPng, ignore = []) {
 	const expected = PNG.sync.read(fs.readFileSync(path.join(baselineDir, `${name}.png`)));
 	const actual = PNG.sync.read(actualPng);
 	if (expected.width !== actual.width || expected.height !== actual.height) return {ratio: 1, reason: "size differs"};
+	for (const [x0, y0, w, h] of ignore) {
+		for (let y = y0; y < Math.min(y0 + h, actual.height); y++) {
+			for (let x = x0; x < Math.min(x0 + w, actual.width); x++) {
+				const i = 4 * (y * actual.width + x);
+				for (const img of [expected, actual]) img.data.fill(0, i, i + 4);
+			}
+		}
+	}
 	const diff = new PNG({width: actual.width, height: actual.height});
 	const n = pixelmatch(expected.data, actual.data, diff.data, actual.width, actual.height, {threshold: 0.1});
 	fs.writeFileSync(path.join(outputDir, `${name}.diff.png`), PNG.sync.write(diff));
@@ -162,7 +172,7 @@ async function runExample(browser, baseUrl, name, baseline) {
 			result.status = "recorded";
 		} else {
 			fs.writeFileSync(path.join(outputDir, `${name}.png`), png);
-			const {ratio, reason} = compare(name, png);
+			const {ratio, reason} = compare(name, png, cfg.ignore);
 			result.diff = ratio;
 			const problems = [];
 			if (reason) problems.push(reason);

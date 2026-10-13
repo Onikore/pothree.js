@@ -82,6 +82,14 @@
 | `shaders/pointcloud.vs/.fs` | основной шейдер облака (GLSL ES 1.0) |
 | `shaders/edl.*`, `normalize*.*` | постпроцесс |
 
+## Операции (`src/operations/`, шаг 8, см. `docs/operations.md`)
+
+| Файл | Назначение |
+|---|---|
+| `PointQuery.js` | `queryPoints` — загруженные точки в области; `BoxRegion`, `SphereRegion`, `ScreenPolygonRegion`; `worldPositions`, `countPoints`, `loadedNodes` |
+| `EditLayer.js` | `EditLayer` (флаги выделено/скрыто, правки атрибутов, отмена/повтор, JSON), `editLayerOf`, `EditFlags` |
+| `Operations.js` | `Operations` — реестр `viewer.operations` и встроенные операции |
+
 ## Вьюер (`src/viewer/`)
 
 | Файл | Назначение |

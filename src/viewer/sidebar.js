@@ -2,7 +2,7 @@
 import * as THREE from "three";
 import {GeoJSONExporter} from "../exporter/GeoJSONExporter.js"
 import {DXFExporter} from "../exporter/DXFExporter.js"
-import {Volume, SphereVolume} from "../utils/Volume.js"
+import {Volume, BoxVolume, SphereVolume} from "../utils/Volume.js"
 import {PolygonClipVolume} from "../utils/PolygonClipVolume.js"
 import {PropertiesPanel} from "./PropertyPanels/PropertiesPanel.js"
 import {PointCloudTree} from "../PointCloudTree.js"
@@ -21,6 +21,8 @@ import JSON5 from "../../libs/json5-2.1.3/json5.mjs";
 import {state} from "../state.js";
 import {saveProject} from "./SaveProject.js";
 import "./selectgroup.js";
+import {BoxRegion} from "../operations/PointQuery.js";
+import {EditFlags} from "../operations/EditLayer.js";
 
 export class Sidebar{
 
@@ -56,6 +58,7 @@ export class Sidebar{
 		this.initNavigation();
 		this.initFilters();
 		this.initClippingTool();
+		this.initSelection();
 		this.initSettings();
 		
 		$('#potree_version_number').html(state.version.major + "." + state.version.minor + state.version.suffix);
@@ -778,6 +781,36 @@ export class Sidebar{
 			e.scene.addEventListener("measurement_removed", onMeasurementRemoved);
 		});
 
+	}
+
+	/** Selection block of the Tools menu: buttons for the built-in operations (src/operations). */
+	initSelection(){
+		const operations = this.viewer.operations;
+		const run = (id, params) => operations.run(id, params).catch(e => this.viewer.postError(e.message, {duration: 5000}));
+
+		$("#selection_in_volumes").click(() => {
+			const boxes = this.viewer.scene.volumes.filter(v => v instanceof BoxVolume);
+			if (boxes.length === 0) {
+				this.viewer.postMessage("Add a box volume first (Tools / Clipping or Measurement: volume)", {duration: 4000});
+				return;
+			}
+			boxes.forEach((box, i) => {
+				box.updateMatrixWorld();
+				run("selection.region", {region: new BoxRegion(box.matrixWorld), mode: i === 0 ? "replace" : "add"});
+			});
+		});
+		$("#selection_clear").click(() => run("selection.clear"));
+		$("#selection_hide").click(() => run("selection.hide"));
+		$("#selection_show_all").click(() => run("edits.showAll"));
+		$("#selection_undo").click(() => run("edits.undo"));
+		$("#selection_redo").click(() => run("edits.redo"));
+
+		const elCount = $("#selection_count");
+		operations.addEventListener("ran", () => {
+			let n = 0;
+			for (const pc of this.viewer.scene.pointclouds) n += pc.editLayer ? pc.editLayer.count(EditFlags.SELECTED) : 0;
+			elCount.text(n.toLocaleString());
+		});
 	}
 
 	initClippingTool(){

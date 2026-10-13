@@ -46,6 +46,127 @@
 		"ept_zstandard": {
 			"maxDiff": 0.02,
 			"note": "broken in the original; reference is ept.png, but the zstandard dataset has a different octree (9 nodes vs 16), so adaptive point sizes differ slightly"
+		},
+		"viewer": {
+			"ignore": [
+				[
+					0,
+					405,
+					300,
+					395
+				]
+			],
+			"note": "sidebar below Clipping: Tools menu has the new Selection block (step 8)"
+		},
+		"load_project": {
+			"ignore": [
+				[
+					0,
+					405,
+					300,
+					395
+				]
+			],
+			"note": "sidebar below Clipping: Tools menu has the new Selection block (step 8)"
+		},
+		"clipping_volume": {
+			"ignore": [
+				[
+					0,
+					405,
+					300,
+					395
+				]
+			],
+			"note": "sidebar below Clipping: Tools menu has the new Selection block (step 8)"
+		},
+		"elevation_profile": {
+			"ignore": [
+				[
+					0,
+					405,
+					300,
+					395
+				]
+			],
+			"note": "sidebar below Clipping: Tools menu has the new Selection block (step 8)"
+		},
+		"features_sorvilier": {
+			"ignore": [
+				[
+					0,
+					405,
+					300,
+					395
+				]
+			],
+			"note": "sidebar below Clipping: Tools menu has the new Selection block (step 8)"
+		},
+		"geopackage": {
+			"ignore": [
+				[
+					0,
+					405,
+					300,
+					395
+				]
+			],
+			"note": "sidebar below Clipping: Tools menu has the new Selection block (step 8)"
+		},
+		"measurements": {
+			"ignore": [
+				[
+					0,
+					405,
+					300,
+					395
+				]
+			],
+			"note": "sidebar below Clipping: Tools menu has the new Selection block (step 8)"
+		},
+		"multiple_pointclouds": {
+			"ignore": [
+				[
+					0,
+					405,
+					300,
+					395
+				]
+			],
+			"note": "sidebar below Clipping: Tools menu has the new Selection block (step 8)"
+		},
+		"oriented_images": {
+			"ignore": [
+				[
+					0,
+					405,
+					300,
+					395
+				]
+			],
+			"note": "sidebar below Clipping: Tools menu has the new Selection block (step 8)"
+		},
+		"shapefiles": {
+			"ignore": [
+				[
+					0,
+					405,
+					300,
+					395
+				]
+			],
+			"note": "sidebar below Clipping: Tools menu has the new Selection block (step 8)"
+		},
+		"embedded_iframe": {
+			"ignore": [
+				[
+					258,
+					567,
+					300,
+					75
+				]
+			],
+			"note": "sidebar below Clipping: Tools menu has the new Selection block (step 8) (sidebar inside the iframe)"
 		}
 	},
 	"groups": {

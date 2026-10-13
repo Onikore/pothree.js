@@ -31,6 +31,11 @@ uniform mat4 uOctreeWorld;
 uniform mat4 uOctreeModelView;
 uniform highp sampler2D uNodeTexture;
 in float aSlot;
+#if defined(use_edits)
+	// edit flags of the point (src/operations/EditLayer.js): 1 = selected, 2 = hidden
+	in float aEdit;
+	uniform vec3 uSelectionColor;
+#endif
 flat out float vPCIndex;
 mat4 modelMatrix;
 mat4 modelViewMatrix;
@@ -1025,5 +1030,15 @@ void main() {
 
 		}
 
+	#endif
+
+	#if defined(use_edits)
+		int edit = int(aEdit + 0.5);
+		if ((edit & 2) != 0) {
+			gl_Position = vec4(0.0, 0.0, 2.0, 1.0); // hidden: outside the clip volume, not drawn or picked
+			gl_PointSize = 0.0;
+		} else if ((edit & 1) != 0) {
+			vColor = mix(vColor, uSelectionColor, 0.7);
+		}
 	#endif
 }

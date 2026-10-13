@@ -126,6 +126,17 @@ three.js r186 (`three@0.186.1`) — последняя стабильная ве
 
 ### Добавлено
 
+- **Каркас операций над облаком** (шаг 8, `src/operations/`, `docs/operations.md`):
+  `queryPoints` + области `BoxRegion`/`SphereRegion`/`ScreenPolygonRegion` (загруженные точки в
+  области, отсев узлов по bbox); `EditLayer` — выделение, скрытие и правка атрибутов точек
+  (например, классификации) с отменой/повтором, сохранением в JSON и повторным наложением при
+  перезагрузке узлов, исходные данные не меняются; реестр `viewer.operations`
+  (`register`/`run`/`list`) со встроенными операциями `selection.region`, `selection.clear`,
+  `selection.hide`, `edits.showAll`, `selection.setAttribute`, `selection.stats`, `query.count`,
+  `edits.undo`/`edits.redo`. В сайдбаре (Tools → Selection): «Select in volumes», Clear, Hide
+  selected, Show all, Undo/Redo, счётчик; горячие клавиши Ctrl+Z, Ctrl+Shift+Z / Ctrl+Y. Облака без
+  правок рисуются как раньше (атрибут `aEdit` и `#define use_edits` — только у облаков с правками).
+
 - Рендер по требованию: `viewer.renderOnDemand = true` — в простое кадры не рисуются (0 % GPU, без
   обхода октодерева), ввод, загрузка, анимации и смена вида будят цикл; `viewer.requestRender()` для
   изменений из своего кода. По умолчанию выключено. Подробно — `docs/rendering.md`.

@@ -85,6 +85,9 @@ import {CopcLoader, EptLoader} from "./loader/EptLoader.js";
 import {PointCloudOctree} from "./PointCloudOctree.js";
 
 export {state} from "./state.js";
+export * from "./operations/PointQuery.js";
+export * from "./operations/EditLayer.js";
+export * from "./operations/Operations.js";
 import {state} from "./state.js";
 
 console.log('Potree ' + state.version.major + '.' + state.version.minor + state.version.suffix);

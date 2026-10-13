@@ -47,6 +47,7 @@ node tests/visual/run.mjs --jobs 2            # визуальный регре�
 node tests/visual/run.mjs --only lion,potree2
 node tests/visual/pick.mjs                     # picking, 5 примеров × 25 позиций
 node tests/visual/ondemand.mjs                 # рендер по требованию (viewer.renderOnDemand)
+node tests/visual/operations.mjs               # операции: выборка, выделение, правки, отмена, JSON
 GL=nvidia BUDGET=10000000 node tests/perf/bench.mjs ca13 300   # отрисовка облаков (UNCAPPED, SCISSOR, LOAD_TIMEOUT)
 GL=nvidia node tests/perf/frame.mjs ca13 20    # профиль кадра (FREEZE, ANNOTATIONS, UNCAPPED)
 GL=nvidia node tests/perf/load.mjs ca13 8      # скорость загрузки
@@ -63,7 +64,7 @@ GL=nvidia node tests/perf/leak.mjs ca13 8      # утечки (минуты)
 - `pkill -f <шаблон>` в той же команде убивает саму команду (шаблон совпадает с её текстом) — запускать отдельно или через TaskStop.
 - `cd X && ( ... ) &` уводит `cd` в фон — второй прогон шёл не в той папке. Делать `cd X;` отдельной командой.
 - Тестовые серверы обязаны отдавать `.css` как `text/css`, иначе раскладка ломается (область 20 px).
-- COPC требует HTTP Range на сервере (есть в `run.mjs`).
+- COPC и Potree 2.0 требуют HTTP Range на тестовом сервере (без него каждый узел получает данные корня).
 - SwiftShader (по умолчанию в тестах) — не для замеров скорости: там исполнение шейдеров на CPU.
   Скорость мерить с `GL=nvidia`. `gl.finish()` в Chrome не ждёт GPU.
 - Примеры — на ES‑сборке (`import * as Potree from "potree"`), глобального `Potree` нет: состояние — `Potree.state.*`
@@ -89,7 +90,8 @@ README в каждом коммите), коммитить и пушить ка�
    при импорте ядра (jQuery‑плагин `selectgroup`, патчи прототипов three — во вьюер), глобальное
    `Potree.*` в ядре → модуль состояния, минификация, ленивые `import()` тяжёлого, бюджет размера в CI.
    План — `MIGRATION_PLAN.md` разделы 6.5 и 7.
-2. **8**: каркас операций (`PointQuery`, `EditLayer`, выделение, регистрация операций) — раздел 6.2 плана.
+2. ~~**8**~~ каркас операций сделан (`src/operations/`, `docs/operations.md`, `tests/visual/operations.mjs`).
+   Не сделано из 6.2: «возможности шейдера» (подключаемые куски GLSL), compute/воркеры, лассо в UI.
 3. Этап 3 ТЗ (ручная проверка функций, Firefox/WebKit), Этап 5 (CI на GitHub Actions).
 
 ## Что ещё можно оптимизировать (не сделано)
