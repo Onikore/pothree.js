@@ -198,7 +198,7 @@ async function runExample(browser, baseUrl, name, baseline) {
 			state = await waitSettled(page, cfg.pointclouds, cfg.animated);
 		}
 		const recordedView = update ? await getView(page) : view;
-		const png = await page.screenshot();
+		const png = await page.screenshot({timeout: TIMEOUT_MS}); // heavy scenes on slow CI CPUs: a frame can take > 30 s
 		Object.assign(result, {state, view: recordedView});
 
 		if (update) {
