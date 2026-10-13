@@ -57,7 +57,8 @@
 		Click on a sphere to enter 360 view. Click "unfocus" to leave 360 view. <br>
 		Point cloud courtesy of <a href="http://www.helimap.com/">Helimap System SA</a>. Images were downsized for this online demo; Original size is 8000x400.`);
 		
-		viewer.loadGUI(() => {
+		// the map view exists once the GUI is loaded; run() waits for it (the point cloud may load first)
+		const guiLoaded = viewer.loadGUI(() => {
 			viewer.setLanguage('en');
 			$("#menu_appearance").next().show();
 			viewer.toggleSidebar();
@@ -101,6 +102,7 @@
 				viewer.scene.add360Images(images);
 			});
 
+			await guiLoaded;
 			viewer.mapView.showSources(false);
 		}
 

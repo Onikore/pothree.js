@@ -110,6 +110,24 @@ async function waitSettled(page, expectPointclouds, animated = false) {
 	throw new Error(`not settled after ${TIMEOUT_MS} ms, last state ${last}`);
 }
 
+// The example has created its viewer and point clouds (count unchanged for a second), so its own
+// startup code (which usually sets a view in the load callback) has run. The baseline view can be
+// set now; waiting until everything is loaded for the example's start view first doubled the work.
+async function waitReady(page, expectPointclouds) {
+	const start = Date.now();
+	let last = null, stableSince = Date.now();
+	while (Date.now() - start < TIMEOUT_MS) {
+		const s = await page.evaluate(STATE).catch(() => null);
+		const count = s ? s.pointclouds : -1;
+		if (count !== last) { last = count; stableSince = Date.now(); }
+		if (s && (!expectPointclouds || count > 0) && Date.now() - stableSince >= 1000) return;
+		await page.waitForTimeout(100);
+	}
+	throw new Error(`no viewer / point clouds after ${TIMEOUT_MS} ms`);
+}
+
+const sameView = (a, b) => a && b && [...a.position, ...a.target].every((v, i) => Math.abs(v - [...b.position, ...b.target][i]) <= 1e-3 * (1 + Math.abs(v)));
+
 async function getView(page) {
 	return page.evaluate(`(() => {
 		const f = ${FIND_VIEWER};
@@ -160,14 +178,23 @@ async function runExample(browser, baseUrl, name, baseline) {
 	page.on("pageerror", e => result.errors.push(String(e)));
 	try {
 		await page.goto(`${baseUrl}/examples/${name}.html`, {waitUntil: "load", timeout: TIMEOUT_MS});
-		let state = await waitSettled(page, cfg.pointclouds, cfg.animated);
-		const view = update ? await getView(page) : baseline?.view;
-		if (view && !update) {
+		const view = update ? null : baseline?.view;
+		let state;
+		if (view) {
+			await waitReady(page, cfg.pointclouds);
 			await setView(page, view);
 			state = await waitSettled(page, cfg.pointclouds, cfg.animated);
+			if (!cfg.animated && !sameView(await getView(page), view)) {
+				// the example moved the camera after startup: back to the baseline view, settle again
+				await setView(page, view);
+				state = await waitSettled(page, cfg.pointclouds, cfg.animated);
+			}
+		} else {
+			state = await waitSettled(page, cfg.pointclouds, cfg.animated);
 		}
+		const recordedView = update ? await getView(page) : view;
 		const png = await page.screenshot();
-		Object.assign(result, {state, view});
+		Object.assign(result, {state, view: recordedView});
 
 		if (update) {
 			fs.writeFileSync(path.join(baselineDir, `${name}.png`), png);
