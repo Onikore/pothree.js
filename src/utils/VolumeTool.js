@@ -80,15 +80,9 @@ export class VolumeTool extends EventDispatcher{
 			callback: null
 		};
 
-		let drag = e => {
+		// async pick while dragging, exact pick on drop (Utils.dragPick)
+		let dragPick = Utils.dragPick({pickClipped: false}, (I, e) => {
 			let camera = this.viewer.scene.getActiveCamera();
-			
-			let I = Utils.getMousePointCloudIntersection(
-				e.drag.end, 
-				this.viewer.scene.getActiveCamera(), 
-				this.viewer, 
-				this.viewer.scene.pointclouds, 
-				{pickClipped: false});
 
 			if (I) {
 				volume.position.copy(I.location);
@@ -98,9 +92,11 @@ export class VolumeTool extends EventDispatcher{
 				let w = Math.abs((wp.z / 5));
 				volume.scale.set(w, w, w);
 			}
-		};
+		});
+		let drag = dragPick.drag;
 
 		let drop = e => {
+			dragPick.drop(e);
 			volume.removeEventListener('drag', drag);
 			volume.removeEventListener('drop', drop);
 

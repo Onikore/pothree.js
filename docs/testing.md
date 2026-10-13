@@ -187,3 +187,11 @@ node tests/visual/pick.mjs --update     снять эталон (на исход
 (`tests/size.mjs`, gzip: `potree.module.min.js` ≤ 135 КБ, `potree.module.js` ≤ 205 КБ, `potree.js` ≤ 650 КБ),
 затем эталонный набор на SwiftShader с кэшем удалённых данных между прогонами; при падении —
 скриншоты и диффы в артефакте `visual-output`.
+
+`pick.mjs` дополнительно проверяет, что асинхронный выбор (`getMousePointCloudIntersectionAsync`)
+в каждой из 25 позиций находит ту же точку, что синхронный.
+
+В CI визуальный тест идёт с `--jobs 2` и `VISUAL_TIMEOUT_MS=600000`: на 4 медленных ядрах сервера
+GitHub четыре страницы SwiftShader одновременно не успевали «успокоиться» за 180 с. Для эталонных
+шрифтов CI ставит `ttf-mscorefonts-installer`, `fonts-noto-core`, `fonts-noto-cjk` (иначе текст сайдбара
+и страниц примеров расходится на 0,5–1,3 %).

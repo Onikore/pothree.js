@@ -414,14 +414,8 @@ export class Measure extends THREE.Object3D {
 		}
 
 		{ // Event Listeners
-			let drag = (e) => {
-				let I = Utils.getMousePointCloudIntersection(
-					e.drag.end, 
-					e.viewer.scene.getActiveCamera(), 
-					e.viewer, 
-					e.viewer.scene.pointclouds,
-					{pickClipped: true});
-
+			// async pick while dragging, exact pick on drop (Utils.dragPick)
+			let dragPick = Utils.dragPick({pickClipped: true}, (I, e) => {
 				if (I) {
 					let i = this.spheres.indexOf(e.drag.object);
 					if (i !== -1) {
@@ -441,9 +435,11 @@ export class Measure extends THREE.Object3D {
 						this.setPosition(i, I.location);
 					}
 				}
-			};
+			});
+			let drag = dragPick.drag;
 
 			let drop = e => {
+				dragPick.drop(e);
 				let i = this.spheres.indexOf(e.drag.object);
 				if (i !== -1) {
 					this.dispatchEvent({

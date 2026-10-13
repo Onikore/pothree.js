@@ -715,12 +715,35 @@ export class PointCloudOctree extends PointCloudTree {
 	 * TODO: only draw pixels that are actually read with readPixels().
 	 *
 	 */
+	/**
+	 * Point under the mouse: renders the nodes on `ray` with point indices as colors into a small
+	 * window around params.x/y and reads it back. Returns the closest point's attributes (position in
+	 * world space), all of them with params.all, or null.
+	 *
+	 * Reading the pixels back synchronously waits until the GPU has finished all queued work (8.5 ms
+	 * per pick on CA13 / 15M points, FPS 286 -> 54 when picking every frame). Code that can take the
+	 * result a frame later (hover, a measurement point following the mouse) uses pickAsync.
+	 */
 	pick(viewer, camera, ray, params = {}){
+		const job = this.pickRender(viewer, camera, ray, params);
+		if (!job) return null;
+		viewer.renderer.readRenderTargetPixels(job.renderTarget, job.x, job.y, job.w, job.h, job.buffer);
+		return this.pickResolve(job);
+	}
+
+	/** Like pick, but the pixels are read without stalling (readRenderTargetPixelsAsync). */
+	async pickAsync(viewer, camera, ray, params = {}){
+		const job = this.pickRender(viewer, camera, ray, params);
+		if (!job) return null;
+		await viewer.renderer.readRenderTargetPixelsAsync(job.renderTarget, job.x, job.y, job.w, job.h, job.buffer);
+		return this.pickResolve(job);
+	}
+
+	/** Renders the pick window (see pick); returns what pickResolve needs, or null if no node is on the ray. */
+	pickRender(viewer, camera, ray, params){
 
 		let renderer = viewer.renderer;
 		let pRenderer = viewer.pRenderer;
-
-		performance.mark("pick-start");
 
 		let getVal = (a, b) => a !== undefined ? a : b;
 
@@ -833,11 +856,15 @@ export class PointCloudOctree extends PointCloudTree {
 
 			this.material = tmp;
 
-			renderer.readRenderTargetPixels(renderTarget, x, y, w, h, buffer);
-
 			renderer.setRenderTarget(null);
 			renderer.setClearColor(clearColor, clearAlpha);
 		}
+
+		return {renderTarget: pickState.renderTarget, x, y, w, h, buffer, pixelPos, nodes, params};
+	}
+
+	/** Finds the hit closest to the cursor in the read-back pick window (see pick). */
+	pickResolve({x, y, w, h, buffer, pixelPos, nodes, params}){
 
 		let pixels = buffer;
 		let ibuffer = new Uint32Array(buffer.buffer);
@@ -913,6 +940,9 @@ export class PointCloudOctree extends PointCloudTree {
 			let node = nodes[hit.pcIndex];
 			let pc = node.sceneNode;
 			let geometry = node.geometryNode.geometry;
+			if (!geometry) {
+				return null; // pickAsync: the node was unloaded while its pixels were read back
+			}
 
 			for(let attributeName in geometry.attributes){
 				let attribute = geometry.attributes[attributeName];
@@ -955,9 +985,6 @@ export class PointCloudOctree extends PointCloudTree {
 
 			hit.point = point;
 		}
-
-		performance.mark("pick-end");
-		performance.measure("pick", "pick-start", "pick-end");
 
 		if(params.all){
 			return hits.map(hit => hit.point);

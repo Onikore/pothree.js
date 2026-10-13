@@ -54,22 +54,18 @@ export class AnnotationTool extends EventDispatcher{
 
 		domElement.addEventListener('mouseup', insertionCallback, true);
 
-		let drag = (e) => {
-			let I = Utils.getMousePointCloudIntersection(
-				e.drag.end, 
-				e.viewer.scene.getActiveCamera(), 
-				e.viewer, 
-				e.viewer.scene.pointclouds,
-				{pickClipped: true});
-
+		// async pick while dragging, exact pick on drop (Utils.dragPick)
+		let dragPick = Utils.dragPick({pickClipped: true}, (I, e) => {
 			if (I) {
 				this.s.position.copy(I.location);
 
 				annotation.position.copy(I.location);
 			}
-		};
+		});
+		let drag = dragPick.drag;
 
 		let drop = (e) => {
+			dragPick.drop(e);
 			this.viewer.scene.scene.remove(this.s);
 			this.s.removeEventListener("drag", drag);
 			this.s.removeEventListener("drop", drop);

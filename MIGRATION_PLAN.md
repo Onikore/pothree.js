@@ -316,6 +316,9 @@ Vite: rollup уже есть, воркеры и ресурсы из gulp пер�
 
 **E. Arena4D — ПРИНЯТО:** `src/arena4d/` мигрирует наравне со всеми. Данных для теста в `pointclouds/` нет.
 
+**M — ПРИНЯТО (2026‑10‑13):** асинхронный picking для перетаскивания инструментов (`pickAsync`,
+`Utils.dragPick`), синхронный API сохранён.
+
 **I — ПРИНЯТО (2026‑10‑13):** LAZ Potree 1.x — laz-perf WASM (из `libs/copc`), zstd — `fzstd`
 (замеры в CHANGELOG).
 

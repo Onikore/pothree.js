@@ -13,7 +13,7 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
 
@@ -48,8 +48,11 @@ jobs:
           key: remote-data-v1-${{ github.run_id }}
           restore-keys: remote-data-v1-
 
+      # 2 pages at a time: SwiftShader uses several cores per page, the runner has 4 slow ones
       - name: Visual regression (SwiftShader)
-        run: node tests/visual/run.mjs --jobs 4
+        run: node tests/visual/run.mjs --jobs 2
+        env:
+          VISUAL_TIMEOUT_MS: 600000
 
       - name: Picking
         run: node tests/visual/pick.mjs

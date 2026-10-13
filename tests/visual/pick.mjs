@@ -6,7 +6,7 @@
 //   options: --only lion,potree2
 //
 // Uses Potree.Utils.getMousePointCloudIntersection, the same call the measuring and annotation
-// tools use. Camera: the view stored in baseline.json for the example (see run.mjs).
+// tools use, and checks that getMousePointCloudIntersectionAsync (pickAsync) finds the same points. Camera: the view stored in baseline.json for the example (see run.mjs).
 
 import fs from "node:fs";
 import http from "node:http";
@@ -72,7 +72,7 @@ async function pickGrid(name) {
 		await page.waitForTimeout(250);
 	}
 
-	const picks = await page.evaluate(() => {
+	const picks = await page.evaluate(async () => {
 		viewer.setFreeze(true);
 		const area = viewer.renderArea;
 		const W = area.clientWidth, H = area.clientHeight;
@@ -80,8 +80,12 @@ async function pickGrid(name) {
 		for (const fx of [0.02, 0.25, 0.5, 0.75, 0.98]) {
 			for (const fy of [0.02, 0.25, 0.5, 0.75, 0.98]) {
 				const mouse = {x: Math.round(fx * W), y: Math.round(fy * H)};
-				const hit = Potree.Utils.getMousePointCloudIntersection(mouse, viewer.scene.getActiveCamera(), viewer, viewer.scene.pointclouds);
-				result.push({mouse, location: hit ? hit.location.toArray() : null});
+				const camera = viewer.scene.getActiveCamera();
+				const hit = Potree.Utils.getMousePointCloudIntersection(mouse, camera, viewer, viewer.scene.pointclouds);
+				// the async variant (pickAsync, used while dragging tools) must find the same point
+				const asyncHit = await Potree.Utils.getMousePointCloudIntersectionAsync(mouse, camera, viewer, viewer.scene.pointclouds);
+				const same = JSON.stringify(hit?.location.toArray() ?? null) === JSON.stringify(asyncHit?.location.toArray() ?? null);
+				result.push({mouse, location: hit ? hit.location.toArray() : null, asyncSame: same});
 			}
 		}
 		return {width: W, height: H, picks: result};
@@ -101,11 +105,11 @@ let failed = 0;
 for (const name of EXAMPLES) {
 	const {width: W, height: H, picks} = await pickGrid(name);
 	if (update) {
-		baseline[name] = picks;
+		baseline[name] = picks.map(({asyncSame, ...pick}) => pick);
 		console.log(`recorded ${name}: ${picks.filter(p => p.location).length}/25 hits`);
 		continue;
 	}
-	const problems = [];
+	const problems = picks.filter(p => !p.asyncSame).map(p => `${JSON.stringify(p.mouse)}: async pick differs from sync pick`);
 	(baseline[name] ?? []).forEach((expected, i) => {
 		const actual = picks[i];
 		if (!expected.location && !actual.location) return;

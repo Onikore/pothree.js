@@ -42,7 +42,7 @@ const only = arg("--only")?.split(",") ?? (arg("--group") ? config.groups[arg("-
 const VIEWPORT = {width: 1280, height: 800};
 const SETTLE_MS = gpu ? 1000 : 2000; // loading must stay idle this long (frames are ~100x faster on the GPU)
 const SETTLE_FRAMES = 30;   // ...and for this many rendered frames
-const TIMEOUT_MS = 180_000; // per example
+const TIMEOUT_MS = Number(process.env.VISUAL_TIMEOUT_MS ?? 180_000); // per example (CI: slower CPUs)
 
 // ponytail: minimal static server, enough for examples (single byte ranges, no caching).
 // Range requests are needed by COPC, which reads parts of the .laz file.

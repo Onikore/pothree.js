@@ -400,10 +400,50 @@ export class Utils {
 		return texture;
 	}
 
+	/** Point of `pointclouds` under the mouse (closest to the camera), or null. Synchronous: see pickAsync. */
 	static getMousePointCloudIntersection (mouse, camera, viewer, pointclouds, params = {}) {
-		
+		const {ray, pickParams} = Utils.mousePick(mouse, camera, viewer, params);
+		const points = pointclouds.map(pointcloud => pointcloud.pick(viewer, camera, ray, pickParams));
+		return Utils.closestPick(camera, pointclouds, points);
+	}
+
+	/**
+	 * Same as getMousePointCloudIntersection, but without stalling on the GPU read-back
+	 * (PointCloudOctree.pickAsync): the result arrives a frame or two later. For code that runs on
+	 * every mouse move (hover, a measurement point following the mouse).
+	 */
+	static async getMousePointCloudIntersectionAsync (mouse, camera, viewer, pointclouds, params = {}) {
+		const {ray, pickParams} = Utils.mousePick(mouse, camera, viewer, params);
+		const points = await Promise.all(pointclouds.map(pointcloud => pointcloud.pickAsync(viewer, camera, ray, pickParams)));
+		return Utils.closestPick(camera, pointclouds, points);
+	}
+
+	/**
+	 * For tools that move something to the point under the mouse while dragging (measurement markers,
+	 * profile points, volumes, annotations): on drag the point is picked asynchronously and only the
+	 * newest result is applied (no GPU stall per mouse move); on drop it is picked synchronously once,
+	 * so the final position is exactly under the cursor. apply(I, event), I may be null.
+	 */
+	static dragPick (params, apply) {
+		let latest = 0;
+		const args = e => [e.drag.end, e.viewer.scene.getActiveCamera(), e.viewer, e.viewer.scene.pointclouds, params];
+		return {
+			drag: e => {
+				const id = ++latest;
+				Utils.getMousePointCloudIntersectionAsync(...args(e)).then(I => {
+					if (id === latest) apply(I, e);
+				});
+			},
+			drop: e => {
+				latest++; // results of pending async picks are dropped
+				if (e.drag && e.drag.end) apply(Utils.getMousePointCloudIntersection(...args(e)), e);
+			},
+		};
+	}
+
+	static mousePick (mouse, camera, viewer, params) {
 		let renderer = viewer.renderer;
-		
+
 		let nmouse = {
 			x: (mouse.x / renderer.domElement.clientWidth) * 2 - 1,
 			y: -(mouse.y / renderer.domElement.clientHeight) * 2 + 1
@@ -420,17 +460,18 @@ export class Utils {
 
 		let raycaster = new THREE.Raycaster();
 		raycaster.setFromCamera(nmouse, camera);
-		let ray = raycaster.ray;
 
+		return {ray: raycaster.ray, pickParams};
+	}
+
+	static closestPick (camera, pointclouds, points) {
 		let selectedPointcloud = null;
 		let closestDistance = Infinity;
-		let closestIntersection = null;
 		let closestPoint = null;
-		
-		for(let pointcloud of pointclouds){
-			let point = pointcloud.pick(viewer, camera, ray, pickParams);
-			
-			if(!point){
+
+		for (let i = 0; i < pointclouds.length; i++) {
+			let point = points[i];
+			if (!point) {
 				continue;
 			}
 
@@ -438,15 +479,14 @@ export class Utils {
 
 			if (distance < closestDistance) {
 				closestDistance = distance;
-				selectedPointcloud = pointcloud;
-				closestIntersection = point.position;
+				selectedPointcloud = pointclouds[i];
 				closestPoint = point;
 			}
 		}
 
 		if (selectedPointcloud) {
 			return {
-				location: closestIntersection,
+				location: closestPoint.position,
 				distance: closestDistance,
 				pointcloud: selectedPointcloud,
 				point: closestPoint
